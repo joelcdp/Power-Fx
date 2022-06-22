@@ -168,11 +168,13 @@ namespace Microsoft.PowerFx
             if (func is IAsyncTexlFunction asyncFunc)
             {
                 var result = await asyncFunc.InvokeAsync(args, _cancel);
+                _context.DecrementCallDepth();
                 return result;
             }
             else if (func is CustomTexlFunction customFunc)
             {
                 var result = customFunc.Invoke(args);
+                _context.DecrementCallDepth();
                 return result;
             }
             else
@@ -182,10 +184,11 @@ namespace Microsoft.PowerFx
                     var result = await ptr(this, context.IncrementStackDepthCounter(childContext), node.IRContext, args);
 
                     Contract.Assert(result.IRContext.ResultType == node.IRContext.ResultType || result is ErrorValue || result.IRContext.ResultType is BlankType);
-
+                    _context.DecrementCallDepth();
                     return result;
                 }
 
+                _context.DecrementCallDepth();
                 return CommonErrors.NotYetImplementedError(node.IRContext, $"Missing func: {func.Name}");
             }
         }

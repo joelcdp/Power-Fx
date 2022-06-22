@@ -3,16 +3,20 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Core.Binding;
+using Microsoft.PowerFx.Core.Functions;
 using Microsoft.PowerFx.Core.Glue;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.Texl;
 using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Functions;
 using Microsoft.PowerFx.Interpreter;
+using Microsoft.PowerFx.Interpreter.UDF;
 using Microsoft.PowerFx.Types;
+using static Microsoft.PowerFx.Interpreter.UDFHelper;
 
 namespace Microsoft.PowerFx
 {
@@ -22,6 +26,8 @@ namespace Microsoft.PowerFx
     public sealed class RecalcEngine : Engine, IScope, IPowerFxEngine
     {
         internal Dictionary<string, RecalcFormulaInfo> Formulas { get; } = new Dictionary<string, RecalcFormulaInfo>();
+
+        internal Dictionary<string, TexlFunction> _customFuncs = new Dictionary<string, TexlFunction>();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RecalcEngine"/> class.
@@ -91,8 +97,9 @@ namespace Microsoft.PowerFx
         /// Create an evaluator over the existing binding. 
         /// </summary>
         /// <param name="result">A successful binding from a previous call to <see cref="Engine.Check(string, RecordType, ParserOptions)"/>. </param>
+        /// <param name="maxCallDepth">Max number of function nesting calls.</param>
         /// <returns></returns>
-        public static IExpression CreateEvaluatorDirect(CheckResult result)
+        public static IExpression CreateEvaluatorDirect(CheckResult result, int maxCallDepth = 100)
         {
             return CreateEvaluatorDirect(result, new StackDepthCounter(PowerFxConfig.DefaultMaxCallDepth));
         }
@@ -154,7 +161,7 @@ namespace Microsoft.PowerFx
         /// <returns>The formula's result.</returns>
         public FormulaValue Eval(string expressionText, RecordValue parameters = null, ParserOptions options = null)
         {
-            return EvalAsync(expressionText, CancellationToken.None, parameters, options).Result;          
+            return EvalAsync(expressionText, CancellationToken.None, parameters, options).Result;
         }
 
         public async Task<FormulaValue> EvalAsync(string expressionText, CancellationToken cancel, RecordValue parameters = null, ParserOptions options = null)
@@ -167,6 +174,83 @@ namespace Microsoft.PowerFx
             var check = Check(expressionText, (RecordType)parameters.IRContext.ResultType, options);
             check.ThrowOnErrors();
             return await check.Expression.EvalAsync(parameters, cancel);
+        }
+
+        /// <summary>
+        /// For private use because we don't want anyone defining a function without binding it.
+        /// </summary>
+        /// <returns></returns>
+        private UDFLazyBinder DefineFunction(UDFDefinition definition)
+        {
+            // $$$ Would be a good helper function 
+            var record = new RecordType();
+            foreach (var p in definition.Parameters)
+            {
+                record = record.Add(p);
+            }
+
+            var check = new CheckWrapper(this, definition.Body, record);
+
+            var func = new UserDefinedTexlFunction(definition.Name, definition.ReturnType, definition.Parameters, check);
+            if (_customFuncs.ContainsKey(definition.Name))
+            {
+                return new UDFLazyBinder(
+                    new ExpressionError()
+                {
+                    Message = "Function name already defined",
+                    Span = null,
+                    Kind = ErrorKind.Internal, //Todo: change this out for a new kind of ErrorKind error.
+                }, definition.Name);
+            }
+
+            _customFuncs[definition.Name] = func;
+            return new UDFLazyBinder(func, definition.Name);
+        }
+
+        private void RemoveFunction(string name)
+        {
+            _customFuncs.Remove(name);
+        }
+
+        /// <summary>
+        /// Tries to define and bind all the functions here. If any function names conflict returns an expression error. 
+        /// Also returns any errors from binding failing. All functions defined here are removed if any of them contain errors.
+        /// </summary>
+        /// <param name="udfDefinitions"></param>
+        /// <returns></returns>
+        internal IEnumerable<ExpressionError> DefineFunctions(IEnumerable<UDFDefinition> udfDefinitions)
+        {
+            var expressionErrors = new List<ExpressionError>();
+
+            var binders = new List<UDFLazyBinder>();
+            foreach (UDFDefinition definition in udfDefinitions)
+            {
+                binders.Add(DefineFunction(definition));
+            }
+            
+            foreach (UDFLazyBinder lazyBinder in binders)
+            {
+                var possibleErrors = lazyBinder.Bind();
+                if (possibleErrors.Any())
+                {
+                    expressionErrors.AddRange(possibleErrors);
+                }
+            }
+
+            if (expressionErrors.Any())
+            {
+                foreach (UDFLazyBinder lazyBinder in binders)
+                {
+                    RemoveFunction(lazyBinder.Name);
+                }
+            }
+
+            return expressionErrors;
+        }
+
+        internal IEnumerable<ExpressionError> DefineFunctions(params UDFDefinition[] udfDefinitions)
+        {
+            return DefineFunctions(udfDefinitions.AsEnumerable());
         }
 
         // Invoke onUpdate() each time this formula is changed, passing in the new value. 

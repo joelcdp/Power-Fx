@@ -68,7 +68,8 @@ namespace Microsoft.PowerFx
                 (var irnode, var ruleScopeSymbol) = IRTranslator.Translate(binding);
 
                 var scope = this;
-                var v = new EvalVisitor(_cultureInfo, CancellationToken.None);
+                
+                var v = new EvalVisitor(_cultureInfo, CancellationToken.None, new Interpreter.EvalContext(_parent.GetMaxCallDepth()));
 
                 var newValue = irnode.Accept(v, new EvalVisitorContext(SymbolContext.New(), new StackDepthCounter(_parent.Config.MaxCallDepth))).Result;
 
