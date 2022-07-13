@@ -350,7 +350,7 @@ namespace Microsoft.PowerFx.Tests
         }
 
         [Fact]
-        public void UDFIncorrectParametersTest()
+        public async void UDFIncorrectParametersTest()
         {
             var config = new PowerFxConfig(null);
             var recalcEngine = new RecalcEngine(config);
@@ -358,6 +358,7 @@ namespace Microsoft.PowerFx.Tests
             Assert.False(recalcEngine.Check("foo(False)").IsSuccess);
             Assert.False(recalcEngine.Check("foo(Table( { Value: \"Strawberry\" }, { Value: \"Vanilla\" } ))").IsSuccess);
             Assert.True(recalcEngine.Check("foo(1)").IsSuccess);
+            await Assert.ThrowsAsync<InvalidOperationException>(async () => await recalcEngine.EvalAsync("foo(False)", CancellationToken.None));
         }
 
         [Fact]
