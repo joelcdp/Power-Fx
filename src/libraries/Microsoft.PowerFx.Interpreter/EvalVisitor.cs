@@ -167,7 +167,12 @@ namespace Microsoft.PowerFx
 
             if (func is IAsyncTexlFunction asyncFunc)
             {
-                var result = await asyncFunc.InvokeAsync(args, _cancel, context.StackDepthCounter.Increment());
+                var result = await asyncFunc.InvokeAsync(args, _cancel);
+                return result;
+            }
+            else if (func is UserDefinedTexlFunction udtf)
+            {
+                var result = await udtf.InvokeAsync(args, _cancel, context.StackDepthCounter.Increment());
                 return result;
             }
             else if (func is CustomTexlFunction customTexlFunc)

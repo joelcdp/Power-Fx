@@ -384,13 +384,13 @@ namespace Microsoft.AppMagic.Authoring.Texl.Builtins
 #if !canvas
         // Provide as hook for execution. 
         public IAsyncTexlFunction _invoker;
-        public async Task<FormulaValue> InvokeAsync(FormulaValue[] args, CancellationToken cancel, StackDepthCounter stackMarker)
+        public async Task<FormulaValue> InvokeAsync(FormulaValue[] args, CancellationToken cancel)
         {
             if (_invoker == null)
             {
                 throw new InvalidOperationException($"Function {Name} can't be invoked.");
             }
-            return await _invoker.InvokeAsync(args, cancel, stackMarker);
+            return await _invoker.InvokeAsync(args, cancel);
         }
 
         // Swap for IService, to cut dependency on TransportType.

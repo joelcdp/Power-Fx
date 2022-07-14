@@ -57,11 +57,11 @@ namespace Microsoft.PowerFx.Tests
 
         public async Task<double> Worker(double d)
         {
-            var result = await Worker(new FormulaValue[] { FormulaValue.New(d) }, CancellationToken.None, new StackDepthCounter(PowerFxConfig.DefaultMaxCallDepth));
+            var result = await Worker(new FormulaValue[] { FormulaValue.New(d) }, CancellationToken.None);
             return ((NumberValue)result).Value;
         }
 
-        public async Task<FormulaValue> Worker(FormulaValue[] args, CancellationToken cancel, StackDepthCounter stackMarker)
+        public async Task<FormulaValue> Worker(FormulaValue[] args, CancellationToken cancel)
         {
             var i = (int)((NumberValue)args[0]).Value;
 

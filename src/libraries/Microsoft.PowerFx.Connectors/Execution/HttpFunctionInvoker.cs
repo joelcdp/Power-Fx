@@ -226,7 +226,7 @@ namespace Microsoft.PowerFx.Connectors
             _invoker = invoker ?? throw new ArgumentNullException(nameof(invoker));
         }
 
-        public Task<FormulaValue> InvokeAsync(FormulaValue[] args, CancellationToken cancel, StackDepthCounter stackMarker)
+        public Task<FormulaValue> InvokeAsync(FormulaValue[] args, CancellationToken cancel)
         {
             return _invoker.InvokeAsync(_cacheScope, cancel, args);
         }

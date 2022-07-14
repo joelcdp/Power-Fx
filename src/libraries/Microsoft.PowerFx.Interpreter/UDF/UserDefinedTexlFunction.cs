@@ -10,7 +10,7 @@ using Microsoft.PowerFx.Types;
 
 namespace Microsoft.PowerFx.Interpreter
 {
-    internal class UserDefinedTexlFunction : CustomTexlFunction, IAsyncTexlFunction
+    internal class UserDefinedTexlFunction : CustomTexlFunction
     {
         private readonly IEnumerable<NamedFormulaType> _parameterNames;
         private IExpression _expr;
@@ -55,7 +55,14 @@ namespace Microsoft.PowerFx.Interpreter
                 throw new UDFBindingMissingException();
             }
 
-            return (ParsedExpression)_expr;
+            if (_expr is ParsedExpression expression)
+            {
+                return expression;
+            }
+            else
+            {
+                throw new UDFBindingMissingException();
+            }
         }
     }
 }

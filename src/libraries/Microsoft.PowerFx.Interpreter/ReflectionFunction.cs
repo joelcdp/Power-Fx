@@ -166,6 +166,6 @@ namespace Microsoft.PowerFx
     // A function capable of async invokes. 
     internal interface IAsyncTexlFunction
     {
-        Task<FormulaValue> InvokeAsync(FormulaValue[] args, CancellationToken cancel, StackDepthCounter stackMarker);
+        Task<FormulaValue> InvokeAsync(FormulaValue[] args, CancellationToken cancel);
     }
 }
