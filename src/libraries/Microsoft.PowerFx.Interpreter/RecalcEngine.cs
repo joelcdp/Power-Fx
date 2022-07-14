@@ -97,9 +97,8 @@ namespace Microsoft.PowerFx
         /// Create an evaluator over the existing binding. 
         /// </summary>
         /// <param name="result">A successful binding from a previous call to <see cref="Engine.Check(string, RecordType, ParserOptions)"/>. </param>
-        /// <param name="maxCallDepth">Max number of function nesting calls.</param>
         /// <returns></returns>
-        public static IExpression CreateEvaluatorDirect(CheckResult result, int maxCallDepth = 100)
+        public static IExpression CreateEvaluatorDirect(CheckResult result)
         {
             return CreateEvaluatorDirect(result, new StackDepthCounter(PowerFxConfig.DefaultMaxCallDepth));
         }
