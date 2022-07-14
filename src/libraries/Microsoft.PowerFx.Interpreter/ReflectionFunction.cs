@@ -12,6 +12,7 @@ using Microsoft.PowerFx.Core.Functions;
 using Microsoft.PowerFx.Core.Localization;
 using Microsoft.PowerFx.Core.Types;
 using Microsoft.PowerFx.Core.Utils;
+using Microsoft.PowerFx.Interpreter;
 using Microsoft.PowerFx.Types;
 using static Microsoft.PowerFx.Core.Localization.TexlStrings;
 
@@ -165,6 +166,6 @@ namespace Microsoft.PowerFx
     // A function capable of async invokes. 
     internal interface IAsyncTexlFunction
     {
-        Task<FormulaValue> InvokeAsync(FormulaValue[] args, CancellationToken cancel);
+        Task<FormulaValue> InvokeAsync(FormulaValue[] args, CancellationToken cancel, StackDepthCounter stackMarker);
     }
 }

@@ -10,6 +10,7 @@ using Microsoft.PowerFx.Core.Localization;
 using Microsoft.PowerFx.Core.Tests;
 using Microsoft.PowerFx.Core.Types;
 using Microsoft.PowerFx.Core.Utils;
+using Microsoft.PowerFx.Interpreter;
 using Microsoft.PowerFx.Types;
 using Xunit;
 using static Microsoft.PowerFx.Core.Localization.TexlStrings;
@@ -21,7 +22,7 @@ namespace Microsoft.PowerFx.Tests
     {
         // Intentionally trivial async function that runs synchronously. 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-        private static async Task<FormulaValue> Worker(FormulaValue[] args, CancellationToken cancel)
+        private static async Task<FormulaValue> Worker(FormulaValue[] args, CancellationToken cancel, StackDepthCounter stackMarker)
         {
             var n = (NumberValue)args[0];
 
@@ -77,7 +78,7 @@ namespace Microsoft.PowerFx.Tests
         {
             private readonly TaskCompletionSource<FormulaValue> _waiter = new TaskCompletionSource<FormulaValue>();
 
-            public async Task<FormulaValue> Worker2(FormulaValue[] args, CancellationToken cancel)
+            public async Task<FormulaValue> Worker2(FormulaValue[] args, CancellationToken cancel, StackDepthCounter stackMarker)
             {
                 await Task.Yield();
                 var result = await _waiter.Task;
@@ -131,7 +132,7 @@ namespace Microsoft.PowerFx.Tests
             Assert.Equal(30.0, result.ToObject());
         }
 
-        private static async Task<FormulaValue> WorkerWaitForCancel(FormulaValue[] args, CancellationToken cancel)
+        private static async Task<FormulaValue> WorkerWaitForCancel(FormulaValue[] args, CancellationToken cancel, StackDepthCounter stackMarker)
         {
             // Block forever until cancellation. 
             await Task.Delay(-1, cancel); // throws TaskCanceledException
@@ -262,7 +263,7 @@ namespace Microsoft.PowerFx.Tests
     // Helper for making async functions. 
     internal class CustomAsyncTexlFunction : TexlFunction, IAsyncTexlFunction
     {
-        public Func<FormulaValue[], CancellationToken, Task<FormulaValue>> _impl;
+        public Func<FormulaValue[], CancellationToken, StackDepthCounter, Task<FormulaValue>> _impl;
 
         public override bool SupportsParamCoercion => true;
 
@@ -288,9 +289,9 @@ namespace Microsoft.PowerFx.Tests
             yield return new[] { SG("Arg 1") };
         }
 
-        public virtual Task<FormulaValue> InvokeAsync(FormulaValue[] args, CancellationToken cancel)
+        public virtual Task<FormulaValue> InvokeAsync(FormulaValue[] args, CancellationToken cancel, StackDepthCounter stackMarker)
         {
-            return _impl(args, cancel);
+            return _impl(args, cancel, stackMarker);
         }
     }
 }

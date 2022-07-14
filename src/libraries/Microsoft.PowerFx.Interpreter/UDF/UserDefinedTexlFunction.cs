@@ -25,13 +25,13 @@ namespace Microsoft.PowerFx.Interpreter
             _check = lazyCheck;
         }
 
-        public async Task<FormulaValue> InvokeAsync(FormulaValue[] args, CancellationToken cancel)
+        public async Task<FormulaValue> InvokeAsync(FormulaValue[] args, CancellationToken cancel, StackDepthCounter stackMarker)
         {
             // $$$ There's a lot of unnecessary string packing overhead here 
             // because Eval wants a Record rather than a resolved arg array.                 
             var parameters = FormulaValue.NewRecordFromFields(UDFHelper.Zip(_parameterNames.ToArray(), args));
 
-            var result = await GetExpression().EvalAsync(parameters, cancel);
+            var result = await GetExpression().EvalAsync(parameters, cancel, stackMarker);
 
             return result;
         }
@@ -48,14 +48,14 @@ namespace Microsoft.PowerFx.Interpreter
             return new List<ExpressionError>();
         }
 
-        public IExpression GetExpression()
+        public ParsedExpression GetExpression()
         {
             if (_expr == null)
             {
                 throw new UDFBindingMissingException();
             }
 
-            return _expr;
+            return (ParsedExpression)_expr;
         }
     }
 }

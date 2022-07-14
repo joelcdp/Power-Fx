@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using System.Web;
 using Microsoft.OpenApi.Models;
 using Microsoft.PowerFx.Connectors.Execution;
+using Microsoft.PowerFx.Interpreter;
 using Microsoft.PowerFx.Types;
 
 namespace Microsoft.PowerFx.Connectors
@@ -225,7 +226,7 @@ namespace Microsoft.PowerFx.Connectors
             _invoker = invoker ?? throw new ArgumentNullException(nameof(invoker));
         }
 
-        public Task<FormulaValue> InvokeAsync(FormulaValue[] args, CancellationToken cancel)
+        public Task<FormulaValue> InvokeAsync(FormulaValue[] args, CancellationToken cancel, StackDepthCounter stackMarker)
         {
             return _invoker.InvokeAsync(_cacheScope, cancel, args);
         }

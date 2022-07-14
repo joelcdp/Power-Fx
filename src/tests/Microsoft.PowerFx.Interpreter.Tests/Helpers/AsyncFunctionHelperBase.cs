@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.PowerFx.Core.Functions;
 using Microsoft.PowerFx.Core.Types;
 using Microsoft.PowerFx.Core.Utils;
+using Microsoft.PowerFx.Interpreter;
 using Microsoft.PowerFx.Types;
 
 namespace Microsoft.PowerFx.Tests
@@ -56,11 +57,11 @@ namespace Microsoft.PowerFx.Tests
 
         public async Task<double> Worker(double d)
         {
-            var result = await Worker(new FormulaValue[] { FormulaValue.New(d) }, CancellationToken.None);
+            var result = await Worker(new FormulaValue[] { FormulaValue.New(d) }, CancellationToken.None, new StackDepthCounter(PowerFxConfig.DefaultMaxCallDepth));
             return ((NumberValue)result).Value;
         }
 
-        public async Task<FormulaValue> Worker(FormulaValue[] args, CancellationToken cancel)
+        public async Task<FormulaValue> Worker(FormulaValue[] args, CancellationToken cancel, StackDepthCounter stackMarker)
         {
             var i = (int)((NumberValue)args[0]).Value;
 

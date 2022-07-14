@@ -28,6 +28,7 @@ using Microsoft.PowerFx;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Types;
 using System.Threading;
+using Microsoft.PowerFx.Interpreter;
 
 namespace Microsoft.AppMagic.Authoring.Texl.Builtins
 {
@@ -383,13 +384,13 @@ namespace Microsoft.AppMagic.Authoring.Texl.Builtins
 #if !canvas
         // Provide as hook for execution. 
         public IAsyncTexlFunction _invoker;
-        public async Task<FormulaValue> InvokeAsync(FormulaValue[] args, CancellationToken cancel)
+        public async Task<FormulaValue> InvokeAsync(FormulaValue[] args, CancellationToken cancel, StackDepthCounter stackMarker)
         {
             if (_invoker == null)
             {
                 throw new InvalidOperationException($"Function {Name} can't be invoked.");
             }
-            return await _invoker.InvokeAsync(args, cancel);
+            return await _invoker.InvokeAsync(args, cancel, stackMarker);
         }
 
         // Swap for IService, to cut dependency on TransportType.

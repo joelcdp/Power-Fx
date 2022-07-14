@@ -293,7 +293,10 @@ namespace Microsoft.PowerFx.Tests
         [Fact]
         public void DefHailstoneSequence()
         {
-            var config = new PowerFxConfig(null);
+            var config = new PowerFxConfig(null)
+            {
+                MaxCallDepth = 100
+            };
             var recalcEngine = new RecalcEngine(config);
             var body = @"If(Not(x = 1), If(Mod(x, 2)=0, hailstone(x/2), hailstone(3*x+1)), x)";
             var funcName = "hailstone";
@@ -308,7 +311,10 @@ namespace Microsoft.PowerFx.Tests
         [Fact]
         public void DefMutualRecursionFunc()
         {
-            var config = new PowerFxConfig(null);
+            var config = new PowerFxConfig(null)
+            {
+                MaxCallDepth = 100
+            };
             var recalcEngine = new RecalcEngine(config);
             var bodyEven = @"If(number = 0, true, odd(Abs(number)-1))";
             var bodyOdd = @"If(number = 0, false, even(Abs(number)-1))";

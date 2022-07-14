@@ -39,5 +39,19 @@ namespace Microsoft.PowerFx
                 return maxCallDepthException.ToErrorValue(_irnode.IRContext);
             }
         }
+
+        public async Task<FormulaValue> EvalAsync(RecordValue parameters, CancellationToken cancel, StackDepthCounter stackMarker)
+        {
+            var ev2 = new EvalVisitor(_cultureInfo, cancel);
+            try
+            {
+                var newValue = await _irnode.Accept(ev2, new EvalVisitorContext(SymbolContext.NewTopScope(_topScopeSymbol, parameters), stackMarker));
+                return newValue;
+            }
+            catch (MaxCallDepthException maxCallDepthException)
+            {
+                return maxCallDepthException.ToErrorValue(_irnode.IRContext);
+            }
+        }
     }
 }

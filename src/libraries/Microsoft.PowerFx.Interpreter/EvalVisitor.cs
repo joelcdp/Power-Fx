@@ -167,12 +167,12 @@ namespace Microsoft.PowerFx
 
             if (func is IAsyncTexlFunction asyncFunc)
             {
-                var result = await asyncFunc.InvokeAsync(args, _cancel);
+                var result = await asyncFunc.InvokeAsync(args, _cancel, context.StackDepthCounter.Increment());
                 return result;
             }
-            else if (func is CustomTexlFunction customFunc)
+            else if (func is CustomTexlFunction customTexlFunc)
             {
-                var result = customFunc.Invoke(args);
+                var result = customTexlFunc.Invoke(args);
                 return result;
             }
             else
