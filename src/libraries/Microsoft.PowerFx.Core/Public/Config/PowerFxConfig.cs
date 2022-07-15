@@ -23,7 +23,6 @@ namespace Microsoft.PowerFx
         private readonly HashSet<TexlFunction> _extraFunctions = new HashSet<TexlFunction>();
         private readonly Dictionary<DName, IExternalEntity> _environmentSymbols;
         private DisplayNameProvider _environmentSymbolDisplayNameProvider;
-        private readonly int _maxCallDepth = 100;
 
         internal static readonly int DefaultMaxCallDepth = 20;
 
@@ -86,8 +85,7 @@ namespace Microsoft.PowerFx
         public IEnumerable<FunctionInfo> FunctionInfos => Functions.Select(f => new FunctionInfo(f));
 
         /// <summary>
-        /// Initializes a new instance of the <see
-        /// cref="PowerFxConfig"/> class.
+        /// Initializes a new instance of the <see cref="PowerFxConfig"/> class.
         /// Copy constructor. Should only be used on a locked PowerFxConfig object. 
         /// </summary>
         /// <param name="other">Config to clone from.</param>
@@ -98,7 +96,6 @@ namespace Microsoft.PowerFx
             _environmentSymbols = other._environmentSymbols;
             _environmentSymbolDisplayNameProvider = other._environmentSymbolDisplayNameProvider;
             _coreFunctions = other._coreFunctions;
-            _maxCallDepth = other._maxCallDepth;
             EnumStoreBuilder = other.EnumStoreBuilder;
             CultureInfo = other.CultureInfo;
         }
@@ -125,15 +122,6 @@ namespace Microsoft.PowerFx
         public IEnumerable<string> GetAllFunctionNames()
         {
             return Functions.Select(func => func.Name).Distinct();
-        }
-
-        /// <summary>
-        /// Gets the max number of recursive function calls allowed.
-        /// </summary>
-        /// <returns></returns>
-        internal int GetMaxCallDepth()
-        {
-            return _maxCallDepth;
         }
 
         internal IEnumerable<IExternalEntity> GetSymbols() => _environmentSymbols.Values;

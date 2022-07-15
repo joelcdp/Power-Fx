@@ -28,7 +28,6 @@ using Microsoft.PowerFx;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Types;
 using System.Threading;
-using Microsoft.PowerFx.Interpreter;
 
 namespace Microsoft.AppMagic.Authoring.Texl.Builtins
 {

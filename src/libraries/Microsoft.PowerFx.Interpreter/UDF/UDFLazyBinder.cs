@@ -12,10 +12,7 @@ namespace Microsoft.PowerFx.Interpreter
         
         private readonly List<ExpressionError> _expressionError = new List<ExpressionError>();
 
-        public string Name
-        {
-            get;
-        }
+        public readonly string Name;
 
         public UDFLazyBinder(UserDefinedTexlFunction texlFunction, string name)
         { 
