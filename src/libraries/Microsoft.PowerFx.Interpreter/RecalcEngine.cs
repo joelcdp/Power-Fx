@@ -94,59 +94,6 @@ namespace Microsoft.PowerFx
             return new ParsedExpression(irnode, ruleScopeSymbol, stackMarker);
         }
 
-        internal (CheckResult, ParsedExpression) CheckForParsedExpression(string expressionText, RecordType parameterType = null)
-        {
-            var parse = Parse(expressionText, null);
-            var bindingConfig = new BindingConfig();
-            parameterType ??= new RecordType();
-
-            // Ok to continue with binding even if there are parse errors. 
-            // We can still use that for intellisense. 
-
-            var resolver = CreateResolver();
-            var glue = CreateBinderGlue();
-
-            var binding = TexlBinding.Run(
-                glue,
-                parse.Root,
-                resolver,
-                bindingConfig,
-                ruleScope: parameterType._type,
-                features: Config.Features);
-
-            var result = new CheckResult(parse, binding);
-            
-            if (result.IsSuccess)
-            {
-                result.TopLevelIdentifiers = DependencyFinder.FindDependencies(binding.Top, binding);
-
-                // TODO: Fix FormulaType.Build to not throw exceptions for Enum types then remove this check
-                if (binding.ResultType.Kind != DKind.Enum)
-                {
-                    result.ReturnType = FormulaType.Build(binding.ResultType);
-                }
-
-                var parsedExp = CreateParsedExpressionEvaluator(result);
-                result.Expression = parsedExp;
-                return (result, parsedExp);
-            }
-
-            return (result, null);
-        }
-
-        private ParsedExpression CreateParsedExpressionEvaluator(CheckResult result)
-        {
-            if (result._binding == null)
-            {
-                throw new InvalidOperationException($"Requires successful binding");
-            }
-
-            result.ThrowOnErrors();
-
-            (var irnode, var ruleScopeSymbol) = IRTranslator.Translate(result._binding);
-            return new ParsedExpression(irnode, ruleScopeSymbol, new StackDepthCounter(Config.MaxCallDepth));
-        }
-
         /// <summary>
         /// Create an evaluator over the existing binding. 
         /// </summary>

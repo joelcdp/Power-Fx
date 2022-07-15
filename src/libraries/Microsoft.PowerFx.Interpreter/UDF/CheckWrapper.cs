@@ -21,6 +21,6 @@ namespace Microsoft.PowerFx.Interpreter.UDF
             _parameterType = parameterType;
         }
 
-        public (CheckResult, ParsedExpression) Get() => _engine.CheckForParsedExpression(_expressionText, _parameterType);
+        public CheckResult Get() => _engine.Check(_expressionText, _parameterType);
     }
 }

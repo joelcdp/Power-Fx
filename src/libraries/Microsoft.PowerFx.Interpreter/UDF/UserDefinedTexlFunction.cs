@@ -38,14 +38,25 @@ namespace Microsoft.PowerFx.Interpreter
 
         public IEnumerable<ExpressionError> Bind()
         {
-            var both = _check.Get();
-            var check = both.Item1;
+            var check = _check.Get();
             if (!check.IsSuccess)
             {
                 return check.Errors;
             }
 
-            _expr = both.Item2;
+            if (check.Expression is ParsedExpression parsed)
+            {
+                _expr = parsed;
+            } 
+            else
+            {
+                var errorList = new List<ExpressionError>
+                {
+                    new ExpressionError()
+                };
+                return errorList;
+            }
+
             return new List<ExpressionError>();
         }
 
