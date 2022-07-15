@@ -12,15 +12,15 @@ namespace Microsoft.PowerFx.Interpreter.UDF
     {
         private readonly string _expressionText;
         private readonly RecordType _parameterType;
-        private readonly Engine _engine;
+        private readonly RecalcEngine _engine;
 
-        public CheckWrapper(Engine engine, string expressionText, RecordType parameterType = null)
+        public CheckWrapper(RecalcEngine engine, string expressionText, RecordType parameterType = null)
         {
             _engine = engine;
             _expressionText = expressionText;
             _parameterType = parameterType;
         }
 
-        public CheckResult Get() => _engine.Check(_expressionText, _parameterType);
+        public (CheckResult, ParsedExpression) Get() => _engine.CheckForParsedExpression(_expressionText, _parameterType);
     }
 }

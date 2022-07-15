@@ -13,7 +13,7 @@ namespace Microsoft.PowerFx.Interpreter
     internal class UserDefinedTexlFunction : CustomTexlFunction
     {
         private readonly IEnumerable<NamedFormulaType> _parameterNames;
-        private IExpression _expr;
+        private ParsedExpression _expr;
         private readonly CheckWrapper _check;
 
         public override bool SupportsParamCoercion => false;
@@ -38,13 +38,14 @@ namespace Microsoft.PowerFx.Interpreter
 
         public IEnumerable<ExpressionError> Bind()
         {
-            var check = _check.Get();
+            var both = _check.Get();
+            var check = both.Item1;
             if (!check.IsSuccess)
             {
                 return check.Errors;
             }
 
-            _expr = check.Expression;
+            _expr = both.Item2;
             return new List<ExpressionError>();
         }
 
@@ -55,14 +56,7 @@ namespace Microsoft.PowerFx.Interpreter
                 throw new UDFBindingMissingException();
             }
 
-            if (_expr is ParsedExpression expression)
-            {
-                return expression;
-            }
-            else
-            {
-                throw new UDFBindingMissingException();
-            }
+            return _expr;
         }
     }
 }

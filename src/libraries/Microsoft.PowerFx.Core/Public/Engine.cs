@@ -136,7 +136,7 @@ namespace Microsoft.PowerFx
         private CheckResult CheckInternal(ParseResult parse, RecordType parameterType, BindingConfig bindingConfig)
         {
             parameterType ??= new RecordType();
-                        
+
             // Ok to continue with binding even if there are parse errors. 
             // We can still use that for intellisense. 
 
