@@ -24,6 +24,7 @@ namespace Microsoft.PowerFx.Core.Texl
         
         public static readonly TexlFunction AmPm = _library.Append(new AmPmFunction());
         public static readonly TexlFunction AmPmShort = _library.Append(new AmPmShortFunction());
+        public static readonly TexlFunction AddConstraint = _library.Append(new AddConstraintFunction());
         public static readonly TexlFunction Abs = _library.Append(new AbsFunction());
         public static readonly TexlFunction AbsT = _library.Append(new AbsTableFunction());
         public static readonly TexlFunction Acos = _library.Append(new AcosFunction());

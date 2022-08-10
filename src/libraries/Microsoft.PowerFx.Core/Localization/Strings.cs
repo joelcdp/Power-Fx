@@ -216,6 +216,7 @@ namespace Microsoft.PowerFx.Core.Localization
         public static StringGetter ColorFadeTArg1 = (b) => StringResources.Get("ColorFadeTArg1", b);
         public static StringGetter ColorFadeTArg2 = (b) => StringResources.Get("ColorFadeTArg2", b);
 
+        public static StringGetter AboutAddConstraint = (b) => $"Add constraint to LP solver";
         public static StringGetter AboutAbs = (b) => StringResources.Get("AboutAbs", b);
         public static StringGetter AboutAbsT = (b) => StringResources.Get("AboutAbsT", b);
         public static StringGetter AboutSqrt = (b) => StringResources.Get("AboutSqrt", b);

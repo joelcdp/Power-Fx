@@ -28,6 +28,18 @@ namespace Microsoft.PowerFx.Functions
         public static IReadOnlyDictionary<TexlFunction, AsyncFunctionPtr> FuncsByName { get; } = new Dictionary<TexlFunction, AsyncFunctionPtr>
         {
             {
+                BuiltinFunctionsCore.AddConstraint,
+                StandardErrorHandlingAsync<FormulaValue>(
+                    expandArguments: NoArgExpansion,
+                    replaceBlankValues: DoNotReplaceBlank,
+                    checkRuntimeTypes: ExactSequence(
+                        ExactValueTypeOrBlank<TableValue>,
+                        ExactValueTypeOrBlank<LambdaFormulaValue>),
+                    checkRuntimeValues: DeferRuntimeValueChecking,
+                    returnBehavior: ReturnBehavior.ReturnBlankIfAnyArgIsBlank,
+                    targetFunction: AddConstraint)
+            },
+            {
                 BuiltinFunctionsCore.Abs,
                 StandardErrorHandling<NumberValue>(
                     expandArguments: NoArgExpansion,
