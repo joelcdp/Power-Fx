@@ -22,7 +22,7 @@ namespace Microsoft.PowerFx.Functions
             foreach (LambdaFormulaValue condition in args.Skip(1))
             {
                 // Expression format: Sum/Max/Min(expression) op expression
-                var binaryOp = condition
+                //var binaryOp = condition
                 var visitor = new CaptureEvalVisitor(runner);
                 foreach (var row in source.Rows)
                 {
@@ -48,13 +48,13 @@ namespace Microsoft.PowerFx.Functions
 
                 // Call the add constraint in the solver
                 //  Translate the var names
-                Console.WriteLine("(");
+                Console.WriteLine();
                 foreach (var item in visitor.Terms)
                 {
                     Console.WriteLine($"{item.Item1} * {item.Item2}");
                 }
 
-                Console.WriteLine(")");
+                Console.WriteLine();
                 Console.WriteLine(visitor.Operator);
                 Console.WriteLine(visitor.Number);
             }

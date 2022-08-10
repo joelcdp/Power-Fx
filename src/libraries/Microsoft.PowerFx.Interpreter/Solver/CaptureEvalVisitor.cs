@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
+using Microsoft.PowerFx.Functions;
 using Microsoft.PowerFx.Types;
 
 namespace Microsoft.PowerFx.Interpreter.Solver
@@ -30,7 +31,7 @@ namespace Microsoft.PowerFx.Interpreter.Solver
 
         public void Reset()
         {
-            _firstBinaryOpVisit = false;
+            _firstBinaryOpVisit = true;
         }
 
         public IEnumerable<Tuple<double, string>> Terms => _capturedTerms;
@@ -105,25 +106,48 @@ namespace Microsoft.PowerFx.Interpreter.Solver
                         _binaryOp = node.Op;
                         break;
                     default:
-                        // TODO: Error only supports '<', '=', '>'
-                        result = false;
-                        break;
+                        return new ErrorValue(node.IRContext, new ExpressionError()
+                        {
+                            Message = $"The only support operators are '<', '=', '>'.  {node.Op} is not supported",
+                            Span = node.IRContext.SourceContext,
+                            Kind = ErrorKind.InvalidFunctionUsage
+                        });
                 }
 
+                var initialCount = _capturedTerms.Count;
                 var arg1 = await node.Left.Accept(this, context);
+                var arg1TermsCount = _capturedTerms.Count;
 
                 var arg2 = await node.Right.Accept(this, context);
-                if (arg1 is NumberValue numberValue1)
+                var arg2TermsCount = _capturedTerms.Count - arg1TermsCount;
+                arg1TermsCount -= initialCount;
+
+                if (_capturedTerms.Count - initialCount == 0)
                 {
-                    _rhs = numberValue1.Value;
+                    return new ErrorValue(node.IRContext, new ExpressionError()
+                    {
+                        Message = "No variables were found in the expression.",
+                        Span = node.IRContext.SourceContext,
+                        Kind = ErrorKind.InvalidFunctionUsage
+                    });
+                }
+
+                var lhs = arg1;
+                var rhs = arg2;
+
+                if (arg2TermsCount != 0)
+                {
+                    lhs = arg2;
+                    rhs = arg1;
                     if (_binaryOp != BinaryOpKind.EqNumbers)
                     {
-                        _binaryOp = BinaryOpKind.LtNumbers; //TODO
+                        _binaryOp = (_binaryOp == BinaryOpKind.LtNumbers) ? BinaryOpKind.GtNumbers : BinaryOpKind.LtNumbers;
                     }
                 }
-                else if (arg2 is NumberValue numberValue2)
+
+                if (rhs is NumberValue number)
                 {
-                    _rhs = numberValue2.Value;
+                    _rhs = number.Value;
                 }
 
                 return FormulaValue.New(result);
