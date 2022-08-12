@@ -19,6 +19,8 @@ namespace Microsoft.PowerFx.Functions
             var source = (TableValue)args[0];
             var arg1 = (LambdaFormulaValue)args[1];
 
+            var solver = (SolverObject)((UntypedObjectValue)context.SymbolContext.GetScopeVar(new Core.IR.Symbols.ScopeSymbol(0), "Solver")).Impl;
+
             foreach (LambdaFormulaValue condition in args.Skip(1))
             {
                 // Expression format: Sum/Max/Min(expression) op expression
@@ -48,15 +50,7 @@ namespace Microsoft.PowerFx.Functions
 
                 // Call the add constraint in the solver
                 //  Translate the var names
-                Console.WriteLine();
-                foreach (var item in visitor.Terms)
-                {
-                    Console.WriteLine($"{item.Item1} * {item.Item2}");
-                }
-
-                Console.WriteLine();
-                Console.WriteLine(visitor.Operator);
-                Console.WriteLine(visitor.Number);
+                solver.AddConstraint(visitor.Terms.Select(t => t.Item1).ToArray(), visitor.Terms.Select(t => t.Item2).ToArray(), visitor.Operator, visitor.Number);
             }
 
             return new BooleanValue(irContext, true);

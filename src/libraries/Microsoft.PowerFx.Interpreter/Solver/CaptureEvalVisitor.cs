@@ -37,24 +37,14 @@ namespace Microsoft.PowerFx.Interpreter.Solver
         public IEnumerable<Tuple<double, string>> Terms => _capturedTerms;
         
         public double Number => _rhs;
-        
-        public string Operator
+
+        public ConstraintOperator Operator => _binaryOp switch
         {
-            get
-            {
-                switch (_binaryOp)
-                {
-                    case BinaryOpKind.EqNumbers:
-                        return "=";
-                    case BinaryOpKind.LtNumbers:
-                        return "<";
-                    case BinaryOpKind.GtNumbers:
-                        return ">";
-                    default:
-                        return "???";
-                }
-            }
-        }
+            BinaryOpKind.EqNumbers => ConstraintOperator.Equal,
+            BinaryOpKind.LeqNumbers => ConstraintOperator.LessEqual,
+            BinaryOpKind.GeqNumbers => ConstraintOperator.GreaterEqual,
+            _ => throw new InvalidOperationException($"Binary operator not supported = {_binaryOp}"),
+        };
 
         public new void CheckCancel()
         {
@@ -101,14 +91,14 @@ namespace Microsoft.PowerFx.Interpreter.Solver
                 switch (node.Op)
                 {
                     case BinaryOpKind.EqNumbers:
-                    case BinaryOpKind.LtNumbers:
-                    case BinaryOpKind.GtNumbers:
+                    case BinaryOpKind.LeqNumbers:
+                    case BinaryOpKind.GeqNumbers:
                         _binaryOp = node.Op;
                         break;
                     default:
                         return new ErrorValue(node.IRContext, new ExpressionError()
                         {
-                            Message = $"The only support operators are '<', '=', '>'.  {node.Op} is not supported",
+                            Message = $"The only support operators are '<=', '=', '=>'.  {node.Op} is not supported",
                             Span = node.IRContext.SourceContext,
                             Kind = ErrorKind.InvalidFunctionUsage
                         });
