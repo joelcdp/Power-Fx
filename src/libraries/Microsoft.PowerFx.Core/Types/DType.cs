@@ -1865,6 +1865,7 @@ namespace Microsoft.PowerFx.Core.Types
 
             bool DefaultReturnValue(DType targetType) =>
                     targetType.Kind == Kind ||
+                    targetType.Kind == DKind.UntypedObject ||
                     targetType.Kind == DKind.Unknown ||
                     (targetType.Kind == DKind.Enum && Accepts(targetType.GetEnumSupertype()));
 
@@ -1921,6 +1922,7 @@ namespace Microsoft.PowerFx.Core.Types
                 case DKind.String:
                     accepts =
                         type.Kind == Kind ||
+                        type.Kind == DKind.UntypedObject ||
                         type.Kind == DKind.Hyperlink ||
                         type.Kind == DKind.Image ||
                         type.Kind == DKind.PenImage ||
@@ -1934,6 +1936,7 @@ namespace Microsoft.PowerFx.Core.Types
                 case DKind.Number:
                     accepts =
                         type.Kind == Kind ||
+                        type.Kind == DKind.UntypedObject ||
                         type.Kind == DKind.Currency ||
                         type.Kind == DKind.Unknown ||
                         (useLegacyDateTimeAccepts &&

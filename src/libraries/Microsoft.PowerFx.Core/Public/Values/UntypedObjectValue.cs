@@ -52,7 +52,7 @@ namespace Microsoft.PowerFx.Types
 
         public override object ToObject()
         {
-            throw new NotImplementedException();
+            return Impl;
         }
 
         public override void Visit(IValueVisitor visitor)

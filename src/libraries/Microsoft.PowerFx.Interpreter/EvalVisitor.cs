@@ -323,6 +323,22 @@ namespace Microsoft.PowerFx
                             return new BlankValue(node.IRContext);
                         }
 
+                        //Convert to FormulaValue if possible
+                        if (res.Type == FormulaType.Boolean)
+                        {
+                            return Library.Boolean_UO(node.IRContext, new[] { new UntypedObjectValue(node.IRContext, res) });
+                        }
+
+                        if (res.Type == FormulaType.Number)
+                        {
+                            return Library.Value_UO(node.IRContext, new[] { new UntypedObjectValue(node.IRContext, res) });
+                        }
+
+                        if (res.Type == FormulaType.String)
+                        {
+                            return Library.Text_UO(node.IRContext, new[] { new UntypedObjectValue(node.IRContext, res) });
+                        }
+
                         return new UntypedObjectValue(node.IRContext, res);
                     }
                     else
