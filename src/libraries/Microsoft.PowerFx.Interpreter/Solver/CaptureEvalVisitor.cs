@@ -59,10 +59,13 @@ namespace Microsoft.PowerFx.Interpreter.Solver
             {
                 var scope = s1.Parent;
 
-                var val = context.SymbolContext.GetScopeVar(scope, "VarName");
-                if (val is StringValue varName)
+                var val = context.SymbolContext.GetScopeVar(scope, s1.Name);
+
+                // TODO find a better way to identify when to capture a term as model variable
+                if (val is UntypedObjectValue untypedObject &&
+                    untypedObject.Impl is ISolverVariable solverVariable)
                 {
-                    currentVarName = varName.Value;
+                    currentVarName = solverVariable.Name;
                 }
             }
 

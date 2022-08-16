@@ -19,7 +19,16 @@ namespace Microsoft.PowerFx.Functions
             var source = (TableValue)args[0];
             var arg1 = (LambdaFormulaValue)args[1];
 
-            var solver = (SolverObject)((UntypedObjectValue)context.SymbolContext.GetScopeVar(new Core.IR.Symbols.ScopeSymbol(0), "Solver")).Impl;
+            var obj = context.SymbolContext.GetScopeVar(new Core.IR.Symbols.ScopeSymbol(0), "Solver");
+            SolverObject solver = null;
+            if (obj is UntypedObjectValue untypedObject)
+            {
+                solver = (SolverObject)untypedObject.Impl;
+            }
+            else
+            {
+                return new BooleanValue(irContext, false);
+            }
 
             foreach (LambdaFormulaValue condition in args.Skip(1))
             {
