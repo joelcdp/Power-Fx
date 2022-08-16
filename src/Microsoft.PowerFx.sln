@@ -39,13 +39,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.PowerFx.Connector
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.PowerFx.Connectors.Tests", "tests\Microsoft.PowerFx.Connectors.Tests\Microsoft.PowerFx.Connectors.Tests.csproj", "{81586372-FE63-4F6D-923D-B47E94487676}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ConsoleApp", "ConsoleApp", "{BD962FA3-F65E-4248-864B-2A0D58E0917D}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleREPL", "..\..\power-fx-host-samples\Samples\ConsoleREPL\ConsoleREPL.csproj", "{CD920832-F976-43F6-9F94-835AA77B0BE0}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TransformFx", "..\..\power-fx-host-samples\Samples\TransformFx\TransformFx.csproj", "{55B925F5-5B10-4D26-98B7-66CA6B734843}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebDemo", "..\..\power-fx-host-samples\Samples\WebDemo\WebDemo.csproj", "{7E5E87D7-4398-4F72-8F07-5797619B3F34}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleREPL", "..\..\power-fx-host-samples\Samples\ConsoleREPL\ConsoleREPL.csproj", "{EC034CA3-8160-403E-9AF5-0C3BD88AA393}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -85,18 +79,10 @@ Global
 		{81586372-FE63-4F6D-923D-B47E94487676}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{81586372-FE63-4F6D-923D-B47E94487676}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{81586372-FE63-4F6D-923D-B47E94487676}.Release|Any CPU.Build.0 = Release|Any CPU
-		{CD920832-F976-43F6-9F94-835AA77B0BE0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{CD920832-F976-43F6-9F94-835AA77B0BE0}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{CD920832-F976-43F6-9F94-835AA77B0BE0}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{CD920832-F976-43F6-9F94-835AA77B0BE0}.Release|Any CPU.Build.0 = Release|Any CPU
-		{55B925F5-5B10-4D26-98B7-66CA6B734843}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{55B925F5-5B10-4D26-98B7-66CA6B734843}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{55B925F5-5B10-4D26-98B7-66CA6B734843}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{55B925F5-5B10-4D26-98B7-66CA6B734843}.Release|Any CPU.Build.0 = Release|Any CPU
-		{7E5E87D7-4398-4F72-8F07-5797619B3F34}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7E5E87D7-4398-4F72-8F07-5797619B3F34}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7E5E87D7-4398-4F72-8F07-5797619B3F34}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7E5E87D7-4398-4F72-8F07-5797619B3F34}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EC034CA3-8160-403E-9AF5-0C3BD88AA393}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EC034CA3-8160-403E-9AF5-0C3BD88AA393}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EC034CA3-8160-403E-9AF5-0C3BD88AA393}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EC034CA3-8160-403E-9AF5-0C3BD88AA393}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -110,9 +96,6 @@ Global
 		{ED98A690-863A-443C-9DBB-8F0F5BCACE2B} = {4269F3C3-6B42-419B-B64A-3E6DC0F1574A}
 		{CEE27893-EE7D-4832-858F-70AF6BA325E3} = {4269F3C3-6B42-419B-B64A-3E6DC0F1574A}
 		{81586372-FE63-4F6D-923D-B47E94487676} = {AD743B78-D61F-4FBF-B620-FA83CE599A50}
-		{CD920832-F976-43F6-9F94-835AA77B0BE0} = {BD962FA3-F65E-4248-864B-2A0D58E0917D}
-		{55B925F5-5B10-4D26-98B7-66CA6B734843} = {BD962FA3-F65E-4248-864B-2A0D58E0917D}
-		{7E5E87D7-4398-4F72-8F07-5797619B3F34} = {BD962FA3-F65E-4248-864B-2A0D58E0917D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {30372F91-B206-4351-A621-F0E2773C337B}

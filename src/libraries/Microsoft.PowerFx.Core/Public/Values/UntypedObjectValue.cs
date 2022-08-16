@@ -11,6 +11,11 @@ using Microsoft.PowerFx.Core.IR;
 
 namespace Microsoft.PowerFx.Types
 {
+    public interface IExternalObject : IUntypedObject
+    {
+        public object ToObject();
+    }
+
     /// <summary>
     /// The backing implementation for UntypedObjectValue, for example Json, Xml,
     /// or the Ast or Value system from another language.
@@ -52,7 +57,7 @@ namespace Microsoft.PowerFx.Types
 
         public override object ToObject()
         {
-            return Impl;
+            return Impl is IExternalObject externalObject ? externalObject.ToObject() : Impl;
         }
 
         public override void Visit(IValueVisitor visitor)

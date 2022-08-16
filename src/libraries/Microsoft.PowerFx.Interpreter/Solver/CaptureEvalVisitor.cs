@@ -65,7 +65,7 @@ namespace Microsoft.PowerFx.Interpreter.Solver
                 if (val is UntypedObjectValue untypedObject &&
                     untypedObject.Impl is ISolverVariable solverVariable)
                 {
-                    currentVarName = solverVariable.Name;
+                    currentVarName = solverVariable.GetVariableName();
                 }
             }
 
@@ -145,10 +145,25 @@ namespace Microsoft.PowerFx.Interpreter.Solver
 
                 return FormulaValue.New(result);
             }
-            else
+            else if (node.Op == BinaryOpKind.DynamicGetField)
             {
-                return await base.Visit(node, context);
+                var arg1 = await node.Left.Accept(this, context);
+                var arg2 = await node.Right.Accept(this, context);
+
+                if (arg1 is UntypedObjectValue cov && arg2 is StringValue sv)
+                {
+                    if (cov.Impl.Type is ExternalType et &&
+                        et.Kind == ExternalTypeKind.Object &&
+                        cov.Impl.TryGetProperty(sv.Value, out var res) &&
+                        res is IExternalObject externalObject &&
+                        externalObject is ISolverVariable solverVariable)
+                    {
+                        _capturedTerms.Add(new Tuple<double, string>(1, solverVariable.GetVariableName()));
+                    }
+                }
             }
+
+            return await base.Visit(node, context);
         }
 
         public override async ValueTask<FormulaValue> Visit(RecordFieldAccessNode node, EvalVisitorContext context)

@@ -3,8 +3,8 @@
 
 namespace Microsoft.PowerFx.Interpreter.Solver
 {
-    public interface ISolverVariable
+    public interface ISolverObjectVariable : ISolverVariable
     {
-        public string GetVariableName();
+        public string GetFieldName();
     }
 }
