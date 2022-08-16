@@ -54,7 +54,7 @@ namespace Microsoft.PowerFx.Functions
                     return CommonErrors.ArgumentOutOfRange(irContext);
                 }
 
-                return new NumberValue(irContext, number);
+                return new NumberValue(new IRContext(irContext.SourceContext, FormulaType.Number), number);
             }
 
             return CommonErrors.RuntimeTypeMismatch(irContext);
@@ -67,7 +67,7 @@ namespace Microsoft.PowerFx.Functions
             if (impl.Type == FormulaType.String)
             {
                 var str = impl.GetString();
-                return new StringValue(irContext, str);
+                return new StringValue(new IRContext(irContext.SourceContext, FormulaType.String), str);
             }
 
             return CommonErrors.RuntimeTypeMismatch(irContext);
@@ -120,7 +120,7 @@ namespace Microsoft.PowerFx.Functions
             if (impl.Type == FormulaType.Boolean)
             {
                 var b = impl.GetBoolean();
-                return new BooleanValue(irContext, b);
+                return new BooleanValue(new IRContext(irContext.SourceContext, FormulaType.Boolean), b);
             }
 
             return CommonErrors.RuntimeTypeMismatch(irContext);
@@ -147,7 +147,7 @@ namespace Microsoft.PowerFx.Functions
                 var s = impl.GetString();
                 if (DateTime.TryParseExact(s, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime res))
                 {
-                    return new DateValue(irContext, res.Date);
+                    return new DateValue(new IRContext(irContext.SourceContext, FormulaType.Date), res.Date);
                 }
 
                 return CommonErrors.InvalidDateTimeError(irContext);
@@ -165,7 +165,7 @@ namespace Microsoft.PowerFx.Functions
                 var s = impl.GetString();
                 if (TimeSpan.TryParseExact(s, @"hh\:mm\:ss\.FFF", CultureInfo.InvariantCulture, TimeSpanStyles.None, out TimeSpan res))
                 {
-                    return new TimeValue(irContext, res);
+                    return new TimeValue(new IRContext(irContext.SourceContext, FormulaType.Time), res);
                 }
 
                 return CommonErrors.InvalidDateTimeError(irContext);
@@ -188,7 +188,7 @@ namespace Microsoft.PowerFx.Functions
 
                 if (DateTime.TryParseExact(s, iso8601Format, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime res))
                 {
-                    return new DateTimeValue(irContext, res);
+                    return new DateTimeValue(new IRContext(irContext.SourceContext, FormulaType.DateTime), res);
                 }
 
                 return CommonErrors.InvalidDateTimeError(irContext);
@@ -204,7 +204,7 @@ namespace Microsoft.PowerFx.Functions
             if (impl.Type == FormulaType.String)
             {
                 var str = new StringValue(IRContext.NotInSource(FormulaType.String), impl.GetString());
-                return Guid(irContext, new StringValue[] { str });
+                return Guid(new IRContext(irContext.SourceContext, FormulaType.Guid), new StringValue[] { str });
             }
 
             return CommonErrors.RuntimeTypeMismatch(irContext);
