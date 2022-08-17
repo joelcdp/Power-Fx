@@ -33,11 +33,9 @@ namespace Microsoft.PowerFx.Functions
             foreach (LambdaFormulaValue condition in args.Skip(1))
             {
                 // Expression format: Sum/Max/Min(expression) op expression
-                //var binaryOp = condition
-                var visitor = new CaptureEvalVisitor(runner);
+                var visitor = new ConstraintEvalVisitor(runner);
                 foreach (var row in source.Rows)
                 {
-                    visitor.Reset();
                     SymbolContext childContext;
                     if (row.IsValue)
                     {
@@ -49,11 +47,16 @@ namespace Microsoft.PowerFx.Functions
                     }
 
                     // condition evals to a boolean 
-                    var res = (BooleanValue)await condition.EvalAsync(visitor, new EvalVisitorContext(childContext, context.StackDepthCounter));
-
-                    if (!res.Value)
+                    var res = await condition.EvalAsync(visitor, new EvalVisitorContext(childContext, context.StackDepthCounter));
+                    if (res is ErrorValue errorValue)
                     {
-                        return new BooleanValue(irContext, false);
+                        return res;
+                    }
+
+                    if (res is not BooleanValue boolValue ||
+                        !boolValue.Value)
+                    {
+                        return new BooleanValue(condition.IRContext, false);
                     }
                 }
 
@@ -62,7 +65,8 @@ namespace Microsoft.PowerFx.Functions
                 solver.AddConstraint(visitor.Terms.Select(t => t.Item1).ToArray(), visitor.Terms.Select(t => t.Item2).ToArray(), visitor.Operator, visitor.Number);
             }
 
-            return new BooleanValue(irContext, true);
+            var resultContext = new IRContext(irContext.SourceContext, FormulaType.Boolean);
+            return new BooleanValue(resultContext, true);
         }
     }
 }

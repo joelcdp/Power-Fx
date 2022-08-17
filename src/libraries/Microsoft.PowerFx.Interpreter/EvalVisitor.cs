@@ -202,7 +202,7 @@ namespace Microsoft.PowerFx
             return await VisitBinaryOpNode(node, context, args);
         }
 
-        private ValueTask<FormulaValue> VisitBinaryOpNode(BinaryOpNode node, EvalVisitorContext context, FormulaValue[] args)
+        protected ValueTask<FormulaValue> VisitBinaryOpNode(BinaryOpNode node, EvalVisitorContext context, FormulaValue[] args)
         {
             switch (node.Op)
             {
