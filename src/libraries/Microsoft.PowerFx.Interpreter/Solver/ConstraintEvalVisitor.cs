@@ -271,7 +271,7 @@ namespace Microsoft.PowerFx.Interpreter.Solver
         }
 
         /// <summary>
-        /// Enforces constraint :=  Sum(expression * solverVariable) [ leq | eq | geq ] expression:
+        /// Enforces constraint :=  Sum/Max/Min(expression * solverVariable) [ leq | eq | geq ] expression:
         /// 
         ///     BinaryNodeOp.Left := Sum(expression * solverVariable) 
         ///     BinaryNodeOp.Op := leq | eq | geq
