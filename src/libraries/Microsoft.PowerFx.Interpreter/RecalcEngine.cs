@@ -24,11 +24,12 @@ namespace Microsoft.PowerFx
     /// <summary>
     /// Holds a set of Power Fx variables and formulas. Formulas are recalculated when their dependent variables change.
     /// </summary>
-    public sealed class RecalcEngine : Engine, IScope, IPowerFxEngine
+    public sealed class RecalcEngine : Engine, IPowerFxEngine
     {
         internal Dictionary<string, RecalcFormulaInfo> Formulas { get; } = new Dictionary<string, RecalcFormulaInfo>();
 
-        internal Dictionary<string, TexlFunction> _customFuncs = new Dictionary<string, TexlFunction>();
+        internal readonly RecalcEngineResolver _symbolTable;
+        internal readonly RecalcSymbolValues _symbolValues;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RecalcEngine"/> class.
@@ -40,39 +41,24 @@ namespace Microsoft.PowerFx
         }
 
         public RecalcEngine(PowerFxConfig powerFxConfig)
-            : base(AddInterpreterFunctions(powerFxConfig))
+            : base(powerFxConfig)
         {
+            _symbolTable = new RecalcEngineResolver(this);
+            _symbolValues = new RecalcSymbolValues(this);
+
+            EngineSymbols = _symbolTable;
+
+            // Add Builtin functions that aren't yet in the shared library. 
+            SupportedFunctions = _interpreterSupportedFunctions;
         }
+            
+        // Set of default functions supported by the interpreter. 
+        private static readonly ReadOnlySymbolTable _interpreterSupportedFunctions = ReadOnlySymbolTable.NewDefault(Library.FunctionList);
 
-        // Add Builtin functions that aren't yet in the shared library. 
-        private static PowerFxConfig AddInterpreterFunctions(PowerFxConfig powerFxConfig)
+        // For internal testing
+        internal INameResolver TestCreateResolver()
         {
-            // Set to Interpreter's implemented list (not necessarily same as defaults)
-            powerFxConfig.SetCoreFunctions(Library.FunctionList);
-
-            // Add custom. 
-            powerFxConfig.AddFunction(BuiltinFunctionsCore.DateTime);
-            powerFxConfig.AddFunction(BuiltinFunctionsCore.Index_UO);
-            powerFxConfig.AddFunction(BuiltinFunctionsCore.ParseJSON);
-            powerFxConfig.AddFunction(BuiltinFunctionsCore.Table_UO);
-            powerFxConfig.AddFunction(BuiltinFunctionsCore.Text_UO);
-            powerFxConfig.AddFunction(BuiltinFunctionsCore.Value_UO);
-            powerFxConfig.AddFunction(BuiltinFunctionsCore.Boolean);
-            powerFxConfig.AddFunction(BuiltinFunctionsCore.Boolean_T);
-            powerFxConfig.AddFunction(BuiltinFunctionsCore.BooleanN);
-            powerFxConfig.AddFunction(BuiltinFunctionsCore.BooleanN_T);
-            powerFxConfig.AddFunction(BuiltinFunctionsCore.Boolean_UO);
-            powerFxConfig.AddFunction(BuiltinFunctionsCore.CountRows_UO);
-
-            return powerFxConfig;
-        }
-
-        /// <inheritdoc/>
-        private protected override INameResolver CreateResolver(PowerFxConfig alternateConfig = null)
-        {
-            // The RecalcEngineResolver allows access to the values from UpdateValue. 
-            var resolver = new RecalcEngineResolver(this, alternateConfig ?? Config);
-            return resolver;
+            return CreateResolverInternal();
         }
 
         /// <inheritdoc/>
@@ -103,19 +89,7 @@ namespace Microsoft.PowerFx
         {
             return CreateEvaluatorDirect(result, new StackDepthCounter(PowerFxConfig.DefaultMaxCallDepth));
         }
-
-        // This handles lookups in the global scope. 
-        FormulaValue IScope.Resolve(string name)
-        {
-            if (Formulas.TryGetValue(name, out var info))
-            {
-                return info.Value;
-            }
-
-            // Binder should have caught. 
-            throw new InvalidOperationException($"Can't resolve '{name}'");
-        }
-
+                
         public void UpdateVariable(string name, double value)
         {
             UpdateVariable(name, new NumberValue(IRContext.NotInSource(FormulaType.Number), value));
@@ -164,7 +138,7 @@ namespace Microsoft.PowerFx
             return EvalAsync(expressionText, CancellationToken.None, parameters, options).Result;
         }
 
-        public async Task<FormulaValue> EvalAsync(string expressionText, CancellationToken cancel, RecordValue parameters = null, ParserOptions options = null)
+        public async Task<FormulaValue> EvalAsync(string expressionText, CancellationToken cancel, RecordValue parameters, ParserOptions options = null)
         {
             if (parameters == null)
             {
@@ -173,7 +147,47 @@ namespace Microsoft.PowerFx
 
             var check = Check(expressionText, (RecordType)parameters.IRContext.ResultType, options);
             check.ThrowOnErrors();
-            return await check.Expression.EvalAsync(parameters, cancel);
+
+            var stackMarker = new StackDepthCounter(Config.MaxCallDepth);
+            var run = check.GetEvaluator(stackMarker);
+
+            var result = await run.EvalAsync(cancel, parameters);
+            return result;
+        }
+                
+        public async Task<FormulaValue> EvalAsync(
+            string expressionText,
+            CancellationToken cancel,
+            ParserOptions options = null,
+            ReadOnlySymbolTable symbolTable = null,
+            ReadOnlySymbolValues runtimeConfig = null)
+        {
+            // We could have any combination of symbols and runtime values. 
+            // - RuntimeConfig may be null if we don't need it. 
+            // - Some Symbols are metadata-only (like option sets, UDFs, constants, etc)
+            // and hence don't require a corresponnding runtime Symbol Value. 
+            var symbolsAll = ReadOnlySymbolTable.Compose(runtimeConfig?.GetSymbolTableSnapshot(), symbolTable);
+
+            var check = Check(expressionText, options, symbolsAll);
+            check.ThrowOnErrors();
+
+            var eval = (ParsedExpression)check.Expression;
+
+            return await eval.EvalAsync(cancel, runtimeConfig);
+        }
+
+        public DefineFunctionsResult DefineFunctions(string script)
+        {
+            var parsedUDFS = new Core.Syntax.ParsedUDFs(script);
+            var result = parsedUDFS.GetParsed();
+
+            var udfDefinitions = result.UDFs.Select(udf => new UDFDefinition(
+                udf.Ident.ToString(), 
+                udf.Body.ToString(), 
+                FormulaType.GetFromStringOrNull(udf.ReturnType.ToString()),
+                udf.IsImperative,
+                udf.Args.Select(arg => new NamedFormulaType(arg.VarIdent.ToString(), FormulaType.GetFromStringOrNull(arg.VarType.ToString()))).ToArray())).ToArray();
+            return DefineFunctions(udfDefinitions);
         }
 
         /// <summary>
@@ -189,21 +203,23 @@ namespace Microsoft.PowerFx
                 record = record.Add(p);
             }
 
-            var check = new CheckWrapper(this, definition.Body, record);
+            var check = new CheckWrapper(this, definition.Body, record, definition.IsImperative);
 
             var func = new UserDefinedTexlFunction(definition.Name, definition.ReturnType, definition.Parameters, check);
-            if (_customFuncs.ContainsKey(definition.Name))
+                        
+            var exists = _symbolTable.Functions.Any(x => x.Name == definition.Name);
+            if (exists)
             {
                 throw new InvalidOperationException($"Function {definition.Name} is already defined");
             }
 
-            _customFuncs[definition.Name] = func;
+            _symbolTable.AddFunction(func);
             return new UDFLazyBinder(func, definition.Name);
         }
 
         private void RemoveFunction(string name)
         {
-            _customFuncs.Remove(name);
+            _symbolTable.RemoveFunction(name);
         }
 
         /// <summary>
@@ -212,7 +228,7 @@ namespace Microsoft.PowerFx
         /// </summary>
         /// <param name="udfDefinitions"></param>
         /// <returns></returns>
-        internal IEnumerable<ExpressionError> DefineFunctions(IEnumerable<UDFDefinition> udfDefinitions)
+        internal DefineFunctionsResult DefineFunctions(IEnumerable<UDFDefinition> udfDefinitions)
         {
             var expressionErrors = new List<ExpressionError>();
 
@@ -239,10 +255,10 @@ namespace Microsoft.PowerFx
                 }
             }
 
-            return expressionErrors;
+            return new DefineFunctionsResult(expressionErrors, binders.Select(binder => new FunctionInfo(binder.Function)));
         }
 
-        internal IEnumerable<ExpressionError> DefineFunctions(params UDFDefinition[] udfDefinitions)
+        internal DefineFunctionsResult DefineFunctions(params UDFDefinition[] udfDefinitions)
         {
             return DefineFunctions(udfDefinitions.AsEnumerable());
         }

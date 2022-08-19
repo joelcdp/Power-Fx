@@ -102,6 +102,25 @@ namespace Microsoft.PowerFx.Types
             return type;
         }
 
+        internal static FormulaType[] GetValidUDFPrimitiveTypes()
+        {
+            FormulaType[] validTypes = { Blank, Boolean, Number, String, Time, Date, DateTime, DateTimeNoTimeZone, Hyperlink, Color, Guid };
+            return validTypes;
+        }
+
+        internal static FormulaType GetFromStringOrNull(string formula)
+        {
+            foreach (FormulaType formulaType in GetValidUDFPrimitiveTypes())
+            {
+                if (formulaType.ToString().Equals(formula))
+                {
+                    return formulaType;
+                }
+            }
+
+            return null;
+        }
+
         // Get the correct derived type
         internal static FormulaType Build(DType type)
         {
@@ -117,7 +136,7 @@ namespace Microsoft.PowerFx.Types
                 case DKind.Record:
                     return new KnownRecordType(type);
                 case DKind.Table:
-                    return new KnownTableType(type);
+                    return new TableType(type);
                 case DKind.Number: return Number;
                 case DKind.String: return String;
                 case DKind.Boolean: return Boolean;
@@ -173,7 +192,7 @@ namespace Microsoft.PowerFx.Types
                         return table;
                     }
 
-                    return new KnownTableType(type);
+                    return new TableType(type);
                 default:
                     return new UnsupportedType(type);
             }
