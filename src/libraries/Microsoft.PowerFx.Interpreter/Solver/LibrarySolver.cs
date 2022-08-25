@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Interpreter.Solver;
 using Microsoft.PowerFx.Types;
@@ -13,27 +14,28 @@ namespace Microsoft.PowerFx.Functions
 {
     internal static partial class Library
     {
-        // AddConstraints(Sum(DurationInMin) < 40 * 60, ...)
+        // AddConstraints(source:*, "name", Sum(DurationInMin) < 40 * 60, ...)
         public static async ValueTask<FormulaValue> AddConstraint(EvalVisitor runner, EvalVisitorContext context, IRContext irContext, FormulaValue[] args)
         {
             var source = (TableValue)args[0];
-            var arg1 = (LambdaFormulaValue)args[1];
+            var name = (LambdaFormulaValue)args[1];
+            var arg1 = (LambdaFormulaValue)args[2];
 
-            var obj = context.SymbolContext.GetScopeVar(new Core.IR.Symbols.ScopeSymbol(0), "Solver");
-            SolverObject solver = null;
-            if (obj is UntypedObjectValue untypedObject)
-            {
-                solver = (SolverObject)untypedObject.Impl;
-            }
-            else
-            {
-                return new BooleanValue(irContext, false);
-            }
+            var solver = runner.FunctionServices.GetService<ISolver>(null);
 
-            foreach (LambdaFormulaValue condition in args.Skip(1))
+            //var obj = context.SymbolContext.GetScopeVar(new Core.IR.Symbols.ScopeSymbol(0), "Solver");
+            //SolverObject solver = null;
+            //if (obj is UntypedObjectValue untypedObject)
+            //{
+            //    solver = (SolverObject)untypedObject.Impl;
+            //}
+            //else
+            //{
+            //    return new BooleanValue(irContext, false);
+            //}
+
+            foreach (LambdaFormulaValue condition in args.Skip(2))
             {
-                // Expression format: Sum/Max/Min(expression) op expression
-                var visitor = new ConstraintEvalVisitor(runner);
                 foreach (var row in source.Rows)
                 {
                     SymbolContext childContext;
@@ -46,7 +48,19 @@ namespace Microsoft.PowerFx.Functions
                         childContext = context.SymbolContext.WithScopeValues(RecordValue.Empty());
                     }
 
-                    // condition evals to a boolean 
+                    var constraintName = await name.EvalAsync(runner, new EvalVisitorContext(childContext, context.StackDepthCounter));
+                    if (constraintName is not StringValue)
+                    {
+                        return new ErrorValue(irContext, new ExpressionError()
+                        {
+                            Message = $"The second parameter must be evaluated to a string. Type found={constraintName.Type.ToString()}",
+                            Span = irContext.SourceContext,
+                            Kind = ErrorKind.InvalidFunctionUsage
+                        });
+                    }
+
+                    // Expression format: Sum/Max/Min(expression) op expression
+                    var visitor = new ConstraintEvalVisitor(runner);
                     var res = await condition.EvalAsync(visitor, new EvalVisitorContext(childContext, context.StackDepthCounter));
                     if (res is ErrorValue errorValue)
                     {
@@ -56,17 +70,24 @@ namespace Microsoft.PowerFx.Functions
                     if (res is not BooleanValue boolValue ||
                         !boolValue.Value)
                     {
-                        return new BooleanValue(condition.IRContext, false);
+                        return FormulaValue.NewSingleColumnTable(new BooleanValue(condition.IRContext, false));
+                    }
+
+                    // Call the add constraint in the solver
+                    //  Translate the var names
+                    if (string.IsNullOrEmpty(visitor.ConditionalVariable))
+                    {
+                        solver.AddConstraint(visitor.Terms.Select(t => t.Item1).ToArray(), visitor.Terms.Select(t => t.Item2).ToArray(), visitor.Operator, visitor.Number, (constraintName as StringValue).Value);
+                    }
+                    else
+                    {
+                        solver.AddConstraint(visitor.ConditionalVariable, visitor.Terms.Select(t => t.Item1).ToArray(), visitor.Terms.Select(t => t.Item2).ToArray(), visitor.Operator, visitor.Number, (constraintName as StringValue).Value);
                     }
                 }
-
-                // Call the add constraint in the solver
-                //  Translate the var names
-                solver.AddConstraint(visitor.Terms.Select(t => t.Item1).ToArray(), visitor.Terms.Select(t => t.Item2).ToArray(), visitor.Operator, visitor.Number);
             }
 
             var resultContext = new IRContext(irContext.SourceContext, FormulaType.Boolean);
-            return new BooleanValue(resultContext, true);
+            return FormulaValue.NewSingleColumnTable(new BooleanValue(resultContext, true));
         }
     }
 }

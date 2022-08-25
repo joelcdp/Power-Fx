@@ -9,6 +9,8 @@ namespace Microsoft.PowerFx.Interpreter.Solver
 {
     public interface ISolver
     {
-        public bool AddConstraint(IReadOnlyCollection<double> coefficients, IReadOnlyCollection<string> variableNames, ConstraintOperator op, double rhsValue);
+        public bool AddConstraint(IReadOnlyCollection<double> coefficients, IReadOnlyCollection<string> variableNames, ConstraintOperator op, double rhsValue, string constraintName);
+        
+        public bool AddConstraint(string conditionalVariableName, IReadOnlyCollection<double> coefficients, IReadOnlyCollection<string> variableNames, ConstraintOperator op, double rhsValue, string constraintName);
     }
 }

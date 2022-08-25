@@ -23,9 +23,9 @@ namespace Microsoft.PowerFx.Interpreter.Solver
 
         public FormulaType Type => ExternalType.ObjectType;
 
-        public bool AddConstraint(IReadOnlyCollection<double> coefficients, IReadOnlyCollection<string> variableNames, ConstraintOperator op, double rhsValue)
+        public bool AddConstraint(IReadOnlyCollection<double> coefficients, IReadOnlyCollection<string> variableNames, ConstraintOperator op, double rhsValue, string constraintName)
         {
-            return _solver.AddConstraint(coefficients, variableNames, op, rhsValue);
+            return _solver.AddConstraint(coefficients, variableNames, op, rhsValue, constraintName);
         }
 
         public int GetArrayLength()
