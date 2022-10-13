@@ -105,6 +105,8 @@ namespace Microsoft.PowerFx.Interpreter.Solver
                     return await VisitIfFunction(node, context);
                 case "Sum":
                     return await VisitSumFunction(node, context);
+                case "Table":
+                    return await base.Visit(node, context);
                 default:
                     return await GetErrorValue(node, $"Function {_functionName} is not supported.  The only functions supported are If() and Sum().");
             }

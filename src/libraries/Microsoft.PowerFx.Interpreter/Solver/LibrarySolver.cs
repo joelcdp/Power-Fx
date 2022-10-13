@@ -1,14 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-using System.Xml.Linq;
-using Microsoft.PowerFx.Core.IR;
-using Microsoft.PowerFx.Interpreter.Solver;
-using Microsoft.PowerFx.Types;
 
 namespace Microsoft.PowerFx.Functions
 {
@@ -22,17 +15,6 @@ namespace Microsoft.PowerFx.Functions
             var arg1 = (LambdaFormulaValue)args[2];
 
             var solver = runner.FunctionServices.GetService<ISolver>(null);
-
-            //var obj = context.SymbolContext.GetScopeVar(new Core.IR.Symbols.ScopeSymbol(0), "Solver");
-            //SolverObject solver = null;
-            //if (obj is UntypedObjectValue untypedObject)
-            //{
-            //    solver = (SolverObject)untypedObject.Impl;
-            //}
-            //else
-            //{
-            //    return new BooleanValue(irContext, false);
-            //}
 
             foreach (LambdaFormulaValue condition in args.Skip(2))
             {
@@ -59,7 +41,7 @@ namespace Microsoft.PowerFx.Functions
                         });
                     }
 
-                    // Expression format: Sum/Max/Min(expression) op expression
+                    // Expression format: [If(variable, )] Sum/Max/Min(expression) op expression
                     var visitor = new ConstraintEvalVisitor(runner);
                     var res = await condition.EvalAsync(visitor, new EvalVisitorContext(childContext, context.StackDepthCounter));
                     if (res is ErrorValue errorValue)
