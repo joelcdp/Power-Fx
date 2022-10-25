@@ -2,6 +2,10 @@
 // Licensed under the MIT license.
 
 using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.PowerFx.Core.IR;
+using Microsoft.PowerFx.Interpreter.Solver;
+using Microsoft.PowerFx.Types;
 
 namespace Microsoft.PowerFx.Functions
 {
