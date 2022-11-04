@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Interpreter.Solver;
@@ -11,7 +12,23 @@ namespace Microsoft.PowerFx.Functions
 {
     internal static partial class Library
     {
-        // AddConstraints(source:*, "name", Sum(DurationInMin) < 40 * 60, ...)
+        // Minimize/Maximize(source:*, "name", Sum(term * variable))
+        public static async ValueTask<FormulaValue> ObjectiveFunction(ObjectiveFunctionGoal goal, EvalVisitor runner, EvalVisitorContext context, IRContext irContext, FormulaValue[] args)
+        {
+            return FormulaValue.NewSingleColumnTable(new BooleanValue(irContext, false));
+        }
+
+        public static async ValueTask<FormulaValue> Minimize(EvalVisitor runner, EvalVisitorContext context, IRContext irContext, FormulaValue[] args)
+        {
+            return await ObjectiveFunction(ObjectiveFunctionGoal.Minimize, runner, context, irContext, args);
+        }
+
+        public static async ValueTask<FormulaValue> Maximize(EvalVisitor runner, EvalVisitorContext context, IRContext irContext, FormulaValue[] args)
+        {
+            return await ObjectiveFunction(ObjectiveFunctionGoal.Maximize, runner, context, irContext, args);
+        }
+
+        // AddConstraints(source:*, "name", Sum(variable) < 40 * 60, ...)
         public static async ValueTask<FormulaValue> AddConstraint(EvalVisitor runner, EvalVisitorContext context, IRContext irContext, FormulaValue[] args)
         {
             var source = (TableValue)args[0];
