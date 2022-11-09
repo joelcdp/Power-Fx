@@ -12,12 +12,6 @@ namespace Microsoft.PowerFx.Functions
 {
     internal static partial class Library
     {
-        // Minimize/Maximize(source:*, "name", Sum(term * variable))
-        public static async ValueTask<FormulaValue> ObjectiveFunction(ObjectiveFunctionGoal goal, EvalVisitor runner, EvalVisitorContext context, IRContext irContext, FormulaValue[] args)
-        {
-            return FormulaValue.NewSingleColumnTable(new BooleanValue(irContext, false));
-        }
-
         public static async ValueTask<FormulaValue> Minimize(EvalVisitor runner, EvalVisitorContext context, IRContext irContext, FormulaValue[] args)
         {
             return await ObjectiveFunction(ObjectiveFunctionGoal.Minimize, runner, context, irContext, args);
@@ -26,6 +20,62 @@ namespace Microsoft.PowerFx.Functions
         public static async ValueTask<FormulaValue> Maximize(EvalVisitor runner, EvalVisitorContext context, IRContext irContext, FormulaValue[] args)
         {
             return await ObjectiveFunction(ObjectiveFunctionGoal.Maximize, runner, context, irContext, args);
+        }
+
+        // Minimize/Maximize(source:*, "name", Sum(term * variable))
+        public static async ValueTask<FormulaValue> ObjectiveFunction(ObjectiveFunctionGoal goal, EvalVisitor runner, EvalVisitorContext context, IRContext irContext, FormulaValue[] args)
+        {
+            var source = (TableValue)args[0];
+            var name = (LambdaFormulaValue)args[1];
+            var arg1 = (LambdaFormulaValue)args[2];
+
+            var solver = runner.FunctionServices.GetService<ISolver>(null);
+
+            foreach (LambdaFormulaValue condition in args.Skip(2))
+            {
+                foreach (var row in source.Rows)
+                {
+                    SymbolContext childContext;
+                    if (row.IsValue)
+                    {
+                        childContext = context.SymbolContext.WithScopeValues(row.Value);
+                    }
+                    else
+                    {
+                        childContext = context.SymbolContext.WithScopeValues(RecordValue.Empty());
+                    }
+
+                    var goalName = await name.EvalAsync(runner, new EvalVisitorContext(childContext, context.StackDepthCounter));
+                    if (goalName is not StringValue)
+                    {
+                        return new ErrorValue(irContext, new ExpressionError()
+                        {
+                            Message = $"The second parameter must be evaluated to a string. Type found={goalName.Type.ToString()}",
+                            Span = irContext.SourceContext,
+                            Kind = ErrorKind.InvalidFunctionUsage
+                        });
+                    }
+
+                    // Expression format: Sum(term * variable)
+                    var visitor = new ConstraintEvalVisitor(runner);
+                    var res = await condition.EvalAsync(visitor, new EvalVisitorContext(childContext, context.StackDepthCounter));
+                    if (res is ErrorValue errorValue)
+                    {
+                        return res;
+                    }
+
+                    if (res is not BooleanValue boolValue ||
+                        !boolValue.Value)
+                    {
+                        return FormulaValue.NewSingleColumnTable(new BooleanValue(condition.IRContext, false));
+                    }
+
+                    solver.AddObjectiveFunction(goal, visitor.Terms.Select(t => t.Item1).ToArray(), visitor.Terms.Select(t => t.Item2).ToArray(), (goalName as StringValue).Value);
+                }
+            }
+
+            var resultContext = new IRContext(irContext.SourceContext, FormulaType.Boolean);
+            return FormulaValue.NewSingleColumnTable(new BooleanValue(resultContext, true));
         }
 
         // AddConstraints(source:*, "name", Sum(variable) < 40 * 60, ...)
