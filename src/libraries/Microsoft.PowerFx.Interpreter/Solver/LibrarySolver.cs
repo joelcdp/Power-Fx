@@ -57,7 +57,7 @@ namespace Microsoft.PowerFx.Functions
                     }
 
                     // Expression format: Sum(term * variable)
-                    var visitor = new ConstraintEvalVisitor(runner);
+                    var visitor = new ObjectiveFunctionEvalVisitor(runner);
                     var res = await condition.EvalAsync(visitor, new EvalVisitorContext(childContext, context.StackDepthCounter));
                     if (res is ErrorValue errorValue)
                     {
