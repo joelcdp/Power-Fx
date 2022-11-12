@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -28,6 +29,7 @@ namespace Microsoft.PowerFx.Functions
             var source = (TableValue)args[0];
             var name = (LambdaFormulaValue)args[1];
             var arg1 = (LambdaFormulaValue)args[2];
+            List<NumberValue> resultTable = null;
 
             var solver = runner.FunctionServices.GetService<ISolver>(null);
 
@@ -64,18 +66,17 @@ namespace Microsoft.PowerFx.Functions
                         return res;
                     }
 
-                    if (res is not BooleanValue boolValue ||
-                        !boolValue.Value)
+                    var numValue = res as NumberValue;
+                    if (resultTable == null)
                     {
-                        return FormulaValue.NewSingleColumnTable(new BooleanValue(condition.IRContext, false));
+                        resultTable.Add(numValue);
                     }
 
                     solver.AddObjectiveFunction(goal, visitor.Terms.Select(t => t.Item1).ToArray(), visitor.Terms.Select(t => t.Item2).ToArray(), (goalName as StringValue).Value);
                 }
             }
 
-            var resultContext = new IRContext(irContext.SourceContext, FormulaType.Boolean);
-            return FormulaValue.NewSingleColumnTable(new BooleanValue(resultContext, true));
+            return FormulaValue.NewSingleColumnTable(resultTable);
         }
 
         // AddConstraints(source:*, "name", Sum(variable) < 40 * 60, ...)
