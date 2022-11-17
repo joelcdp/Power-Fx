@@ -17,18 +17,24 @@ using Microsoft.PowerFx.Types;
 namespace Microsoft.PowerFx.Interpreter.Solver
 {
     /// <summary>
-    /// This visitor enforces the following expression for the Minimize/Maximize(source, name, expression):
+    /// This visitor enforces the following expression for the constraint component of AddConstraint(source, constraint):
     /// 
-    /// objFunction :=  Sum(expression * solverVariable).
+    /// constraint :=  [ If(solverVariable, ] Sum(expression * solverVariable) ( leq | eq | geq ) expression [ ) ].
     /// 
     /// </summary>
-    internal class ObjectiveFunctionEvalVisitor : EvalVisitor
+    internal class ConstraintEvalVisitor : EvalVisitor
     {
         private readonly List<Tuple<double, string>> _capturedTerms = new ();
         private readonly EvalVisitor _evalVisitor;
+        private BinaryOpKind _binaryOp = BinaryOpKind.Invalid;
+        private double _rhs = 0;
+        private bool _capturingTerms = false;
+        private string _functionName = string.Empty;
+        private bool _ifFunctionCalled = false;
+        private int _ifArgIndex = -1;
         private bool _sumFunctionCalled = false;
 
-        public ObjectiveFunctionEvalVisitor(EvalVisitor visitor)
+        public ConstraintEvalVisitor(EvalVisitor visitor)
             : base(visitor.CultureInfo, new CancellationToken())
         {
             _evalVisitor = visitor;
@@ -38,6 +44,18 @@ namespace Microsoft.PowerFx.Interpreter.Solver
 
         public IEnumerable<Tuple<double, string>> Terms => _capturedTerms;
         
+        public double Number => _rhs;
+
+        public string FunctionName => _functionName;
+
+        public ConstraintOperator Operator => _binaryOp switch
+        {
+            BinaryOpKind.EqNumbers => ConstraintOperator.Equal,
+            BinaryOpKind.LeqNumbers => ConstraintOperator.LessEqual,
+            BinaryOpKind.GeqNumbers => ConstraintOperator.GreaterEqual,
+            _ => throw new InvalidOperationException($"Binary operator not supported = {_binaryOp}"),
+        };
+
         public new void CheckCancel()
         {
             _evalVisitor.CheckCancel();
@@ -83,12 +101,15 @@ namespace Microsoft.PowerFx.Interpreter.Solver
 
             switch (functionName)
             {
+                case "If":
+                    return await VisitIfFunction(node, context);
                 case "Sum":
                     return await VisitSumFunction(node, context);
                 case "Table":
+                case "Value":
                     return await base.Visit(node, context);
                 default:
-                    return await GetErrorValue(node, $"Function {functionName} is not supported.  The only functions supported are Table() and Sum().");
+                    return await GetErrorValue(node, $"Function {_functionName} is not supported.  The only functions supported are If() and Sum().");
             }
         }
 
@@ -102,6 +123,7 @@ namespace Microsoft.PowerFx.Interpreter.Solver
             try
             {
                 _sumFunctionCalled = true;
+                _functionName = node.Function.Name;
                 return await base.Visit(node, context);
             }
             finally
@@ -110,12 +132,71 @@ namespace Microsoft.PowerFx.Interpreter.Solver
             }
         }
 
+        private async ValueTask<FormulaValue> VisitIfFunction(CallNode node, EvalVisitorContext context)
+        {
+            if (_ifFunctionCalled)
+            {
+                return await GetErrorValue(node, $"If() is not supported in this context.");
+            }
+
+            if (node.Args.Count != 2)
+            {
+                return await GetErrorValue(node, $"If() function in this context must have two arguments.");
+            }
+
+            try
+            {
+                _ifFunctionCalled = true;
+                _ifArgIndex = 0;
+                var initialCount = _capturedTerms.Count;
+                var condition = await node.Args[_ifArgIndex].Accept(this, context.IncrementStackDepthCounter());
+                var termsCount = _capturedTerms.Count;
+                if (termsCount - initialCount != 1 ||
+                    condition is not BooleanValue)
+                {
+                    return await GetErrorValue(node, $"The first argument in the If() function must specific one boolean variable.");
+                }
+
+                ConditionalVariable = _capturedTerms.Last().Item2;
+                _capturedTerms.Remove(_capturedTerms.Last());
+                _ifArgIndex = 1;
+                return await node.Args[_ifArgIndex].Accept(this, context.IncrementStackDepthCounter());
+            }
+            finally
+            {
+                _ifArgIndex = -1;
+                _ifFunctionCalled = false;
+            }
+        }
+
         public override async ValueTask<FormulaValue> Visit(BinaryOpNode node, EvalVisitorContext context)
-        {            
+        {
+            if (_ifFunctionCalled && _ifArgIndex == 0)
+            {
+                return await BinaryOpVisit(node, context);
+            }
+            else if (!_capturingTerms)
+            {
+                try
+                {
+                    _capturingTerms = true;
+                    return await ConstraintExpressionBinaryOpVisit(node, context);
+                }
+                finally
+                {
+                    _capturingTerms = false;
+                }
+            }
+            
             return await BinaryOpVisit(node, context);
         }
 
         public override ValueTask<FormulaValue> Visit(LazyEvalNode node, EvalVisitorContext context)
+        {
+            return base.Visit(node, context);
+        }
+
+        public override ValueTask<FormulaValue> Visit(ResolvedObjectNode node, EvalVisitorContext context)
         {
             return base.Visit(node, context);
         }
@@ -162,11 +243,6 @@ namespace Microsoft.PowerFx.Interpreter.Solver
         }
 
         public override ValueTask<FormulaValue> Visit(RecordNode node, EvalVisitorContext context)
-        {
-            throw CreateException(node);
-        }
-
-        public override ValueTask<FormulaValue> Visit(ResolvedObjectNode node, EvalVisitorContext context)
         {
             throw CreateException(node);
         }
@@ -260,6 +336,48 @@ namespace Microsoft.PowerFx.Interpreter.Solver
             }
 
             return await VisitBinaryOpNode(node, context, args);
+        }
+
+        /// <summary>
+        /// Enforces constraint expression :=  Sum/Max/Min(expression * solverVariable) [ leq | eq | geq ] expression
+        /// 
+        ///     BinaryNodeOp.Left := Sum(expression * solverVariable) 
+        ///     BinaryNodeOp.Op := leq | eq | geq
+        ///     BinaryNodeOp.Right := expression.
+        ///    
+        /// </summary>
+        private async ValueTask<FormulaValue> ConstraintExpressionBinaryOpVisit(BinaryOpNode node, EvalVisitorContext context)
+        {
+            switch (node.Op)
+            {
+                case BinaryOpKind.EqNumbers:
+                case BinaryOpKind.LeqNumbers:
+                case BinaryOpKind.GeqNumbers:
+                    _binaryOp = node.Op;
+                    break;
+                case BinaryOpKind.DynamicGetField:
+                    break;
+                default:
+                    return await GetErrorValue(node, $"The only support operators are '<=', '=', '=>'.  {node.Op} is not supported");
+            }
+
+            var initialCount = _capturedTerms.Count;
+            var arg1 = await node.Left.Accept(this, context);
+            var termsCount = _capturedTerms.Count;
+
+            var arg2 = await node.Right.Accept(_evalVisitor, context);
+
+            if (termsCount == 0)
+            {
+                return await GetErrorValue(node, "No variables were found in the expression.");
+            }
+
+            if (arg2 is NumberValue number)
+            {
+                _rhs = number.Value;
+            }
+
+            return FormulaValue.New(true);
         }
 
         private static async ValueTask<FormulaValue> GetErrorValue(IntermediateNode node, string msg)

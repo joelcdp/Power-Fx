@@ -13,25 +13,25 @@ using Xunit;
 
 namespace Microsoft.PowerFx.Interpreter.Tests.Solver
 {
-    public class ConstraintTest : PowerFxTest
+    public class ObjectiveFunctionTest : PowerFxTest
     {
         private const string ColumnName = "Value";
 
-        public ConstraintTest()
+        public ObjectiveFunctionTest()
         {
         }
 
         [Theory]
         [InlineData(
-            "AddConstraints(Table1, Concatenate(\"name\", Text(Value)), Value(Value) <= 1)",
-            new string[] { "name2:1*intVar2LessEqual1" })]
+            "Minimize(Table1, Concatenate(\"name\", Text(Value)), Value(Value) )", 
+            new string[] { "Minimize[name2]:1*intVar2" })]
         [InlineData(
-            "AddConstraints(Table1, Concatenate(\"name\", Text(Value(Value))), Value(Value) <= 1)", 
-            new string[] { "name2:1*intVar2LessEqual1" })]
+            "Maximize(Table1, Concatenate(\"name\", Text(Value(Value))), Value(Value) )", 
+            new string[] { "Maximize[name2]:1*intVar2" })]
         [InlineData(
-            "AddConstraints(Table({a:0}), \"name\", Sum(Table1, Value(Value)) = 3)", 
-            new string[] { "name:1*intVar0 + 1*intVar1 + 1*intVar2Equal3" })]
-        public void AddConstraint(string script, string[] expected)
+            "Maximize(Table({a:0}), \"name\", Sum(Table1, Value(Value)))", 
+            new string[] { "Maximize[name]:1*intVar0 + 1*intVar1 + 1*intVar2" })]
+        public void AddObjectiveFunction(string script, string[] expected)
         {
             var engine = new RecalcEngine();
             var solver = new SolverEngine();
@@ -55,7 +55,7 @@ namespace Microsoft.PowerFx.Interpreter.Tests.Solver
 
             var result = engine.EvalAsync(script, CancellationToken.None, runtimeConfig: values).Result;
             Assert.True(result is not ErrorValue, "result must not be an error");
-            Assert.Equal(expected, solver.CommandaReceived);
+            solver.AssertCommandsReceived(expected);
         }
     }
 }

@@ -29,7 +29,7 @@ namespace Microsoft.PowerFx.Functions
             var source = (TableValue)args[0];
             var name = (LambdaFormulaValue)args[1];
             var arg1 = (LambdaFormulaValue)args[2];
-            List<NumberValue> resultTable = null;
+            var resultTable = new List<NumberValue>();
 
             var solver = runner.FunctionServices.GetService<ISolver>(null);
 
@@ -67,7 +67,7 @@ namespace Microsoft.PowerFx.Functions
                     }
 
                     var numValue = res as NumberValue;
-                    if (resultTable == null)
+                    if (numValue == null)
                     {
                         resultTable.Add(numValue);
                     }

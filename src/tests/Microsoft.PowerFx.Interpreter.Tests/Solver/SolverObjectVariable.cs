@@ -136,7 +136,7 @@ namespace Microsoft.PowerFx.Interpreter.Tests
                 return _value as string;
             }
 
-            throw new InvalidOperationException();
+            return _value.ToString();
         }
 
         public virtual bool TryGetProperty(string name, out IUntypedObject result)

@@ -99,6 +99,11 @@ namespace Microsoft.PowerFx.Functions
                 return DateTimeToNumber(irContext, new DateTimeValue[] { dtv });
             }
 
+            if (arg0 is UntypedObjectValue ov)
+            {
+                return new NumberValue(irContext, ov.Impl.GetDouble());
+            }
+
             string str = null;
 
             if (arg0 is StringValue sv)
@@ -174,6 +179,9 @@ namespace Microsoft.PowerFx.Functions
                 case TimeValue t:
                     formatString = ExpandDateTimeFormatSpecifiers(formatString, culture);
                     resultString = _epoch.Add(t.Value).ToString(formatString ?? "t", culture);
+                    break;
+                case UntypedObjectValue o:
+                    resultString = o.Impl.GetString();
                     break;
                 default:
                     break;
