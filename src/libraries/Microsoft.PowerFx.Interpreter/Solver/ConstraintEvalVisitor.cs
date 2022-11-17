@@ -106,6 +106,7 @@ namespace Microsoft.PowerFx.Interpreter.Solver
                 case "Sum":
                     return await VisitSumFunction(node, context);
                 case "Table":
+                case "Value":
                     return await base.Visit(node, context);
                 default:
                     return await GetErrorValue(node, $"Function {_functionName} is not supported.  The only functions supported are If() and Sum().");
@@ -243,7 +244,9 @@ namespace Microsoft.PowerFx.Interpreter.Solver
 
         public override ValueTask<FormulaValue> Visit(ResolvedObjectNode node, EvalVisitorContext context)
         {
-            throw CreateException(node);
+            return base.Visit(node, context);
+            
+            //throw CreateException(node);
         }
 
         public override ValueTask<FormulaValue> Visit(SingleColumnTableAccessNode node, EvalVisitorContext context)
