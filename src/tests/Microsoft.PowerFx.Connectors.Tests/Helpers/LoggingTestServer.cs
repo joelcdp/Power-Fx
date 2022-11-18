@@ -29,6 +29,7 @@ namespace Microsoft.PowerFx.Tests
         }
 
         // Set the response, returned by SendAsync
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2213:Disposable fields should be disposed", Justification = "test code")]
         public HttpResponseMessage _nextResponse;
 
         public void SetResponseFromFile(string filename, HttpStatusCode status = HttpStatusCode.OK)
