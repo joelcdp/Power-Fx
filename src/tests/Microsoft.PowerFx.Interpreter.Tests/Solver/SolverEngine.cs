@@ -12,7 +12,12 @@ namespace Microsoft.PowerFx.Interpreter.Tests
 {
     internal class SolverEngine : ISolver
     {
-        public List<string> CommandaReceived { get; private set; }
+        public SolverEngine()
+        {
+            CommandsReceived = new List<string>();
+        }
+
+        public List<string> CommandsReceived { get; private set; }
 
         public bool AddConstraint(IReadOnlyCollection<double> coefficients, IReadOnlyCollection<string> variableNames, ConstraintOperator op, double rhsValue, string constraintName)
         {
@@ -53,7 +58,7 @@ namespace Microsoft.PowerFx.Interpreter.Tests
 
             cmd.Append(op);
             cmd.Append(rhsValue);
-            CommandaReceived.Add(cmd.ToString());
+            CommandsReceived.Add(cmd.ToString());
             return true;
         }
 
@@ -84,16 +89,16 @@ namespace Microsoft.PowerFx.Interpreter.Tests
                 cmd.Append(vars[index]);
             }
 
-            CommandaReceived.Add(cmd.ToString());
+            CommandsReceived.Add(cmd.ToString());
             return true;
         }
 
         public void AssertCommandsReceived(string[] expected)
         {
-            Assert.Equal(expected.Length, CommandaReceived.Count);
+            Assert.Equal(expected.Length, CommandsReceived.Count);
             for (var index = 0; index < expected.Length; index++)
             {
-                Assert.Equal(expected[index], CommandaReceived[index]);
+                Assert.Equal(expected[index], CommandsReceived[index]);
             }
         }
     }

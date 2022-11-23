@@ -24,10 +24,10 @@ namespace Microsoft.PowerFx.Interpreter.Tests.Solver
         [Theory]
         [InlineData(
             "AddConstraints(Table1, Concatenate(\"name\", Text(Value)), Value(Value) <= 1)",
-            new string[] { "name2:1*intVar2LessEqual1" })]
+            new string[] { "name0:1*intVar0LessEqual1", "name1:1*intVar1LessEqual1", "name2:1*intVar2LessEqual1" })]
         [InlineData(
             "AddConstraints(Table1, Concatenate(\"name\", Text(Value(Value))), Value(Value) <= 1)", 
-            new string[] { "name2:1*intVar2LessEqual1" })]
+            new string[] { "name0:1*intVar0LessEqual1", "name1:1*intVar1LessEqual1", "name2:1*intVar2LessEqual1" })]
         [InlineData(
             "AddConstraints(Table({a:0}), \"name\", Sum(Table1, Value(Value)) = 3)", 
             new string[] { "name:1*intVar0 + 1*intVar1 + 1*intVar2Equal3" })]
@@ -55,7 +55,7 @@ namespace Microsoft.PowerFx.Interpreter.Tests.Solver
 
             var result = engine.EvalAsync(script, CancellationToken.None, runtimeConfig: values).Result;
             Assert.True(result is not ErrorValue, "result must not be an error");
-            Assert.Equal(expected, solver.CommandaReceived);
+            Assert.Equal(expected, solver.CommandsReceived);
         }
     }
 }

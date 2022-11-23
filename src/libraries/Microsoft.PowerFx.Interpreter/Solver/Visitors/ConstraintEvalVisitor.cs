@@ -134,9 +134,9 @@ namespace Microsoft.PowerFx.Interpreter.Solver
 
         private async ValueTask<FormulaValue> VisitIfFunction(CallNode node, EvalVisitorContext context)
         {
-            if (_ifFunctionCalled)
+            if (_sumFunctionCalled)
             {
-                return await GetErrorValue(node, $"If() is not supported in this context.");
+                return await base.Visit(node, context);
             }
 
             if (node.Args.Count != 2)
@@ -214,7 +214,7 @@ namespace Microsoft.PowerFx.Interpreter.Solver
 
         public override ValueTask<FormulaValue> Visit(BooleanLiteralNode node, EvalVisitorContext context)
         {
-            throw CreateException(node);
+            return base.Visit(node, context);
         }
 
         public override ValueTask<FormulaValue> Visit(ChainingNode node, EvalVisitorContext context)
@@ -224,7 +224,7 @@ namespace Microsoft.PowerFx.Interpreter.Solver
 
         public override ValueTask<FormulaValue> Visit(ColorLiteralNode node, EvalVisitorContext context)
         {
-            throw CreateException(node);
+            return base.Visit(node, context);
         }
 
         public override ValueTask<FormulaValue> Visit(ErrorNode node, EvalVisitorContext context)
@@ -234,7 +234,7 @@ namespace Microsoft.PowerFx.Interpreter.Solver
 
         public override ValueTask<FormulaValue> Visit(NumberLiteralNode node, EvalVisitorContext context)
         {
-            throw CreateException(node);
+            return base.Visit(node, context);
         }
 
         public override ValueTask<FormulaValue> Visit(RecordFieldAccessNode node, EvalVisitorContext context)
@@ -254,12 +254,12 @@ namespace Microsoft.PowerFx.Interpreter.Solver
 
         public override ValueTask<FormulaValue> Visit(TextLiteralNode node, EvalVisitorContext context)
         {
-            throw CreateException(node);
+            return base.Visit(node, context);
         }
 
         public override ValueTask<FormulaValue> Visit(UnaryOpNode node, EvalVisitorContext context)
         {
-            throw CreateException(node);
+            return base.Visit(node, context);
         }
         #endregion
 

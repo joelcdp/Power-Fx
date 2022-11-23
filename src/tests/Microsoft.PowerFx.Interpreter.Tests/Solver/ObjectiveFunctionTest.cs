@@ -24,10 +24,10 @@ namespace Microsoft.PowerFx.Interpreter.Tests.Solver
         [Theory]
         [InlineData(
             "Minimize(Table1, Concatenate(\"name\", Text(Value)), Value(Value) )", 
-            new string[] { "Minimize[name2]:1*intVar2" })]
+            new string[] { "Minimize[name0]:1*intVar0", "Minimize[name1]:1*intVar1", "Minimize[name2]:1*intVar2" })]
         [InlineData(
             "Maximize(Table1, Concatenate(\"name\", Text(Value(Value))), Value(Value) )", 
-            new string[] { "Maximize[name2]:1*intVar2" })]
+            new string[] { "Maximize[name0]:1*intVar0", "Maximize[name1]:1*intVar1", "Maximize[name2]:1*intVar2" })]
         [InlineData(
             "Maximize(Table({a:0}), \"name\", Sum(Table1, Value(Value)))", 
             new string[] { "Maximize[name]:1*intVar0 + 1*intVar1 + 1*intVar2" })]
