@@ -66,8 +66,7 @@ namespace Microsoft.PowerFx.Functions
                         return res;
                     }
 
-                    var numValue = res as NumberValue;
-                    if (numValue == null)
+                    if (res is NumberValue numValue)
                     {
                         resultTable.Add(numValue);
                     }

@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Globalization;
 using System.Linq;
@@ -369,7 +370,7 @@ namespace Microsoft.PowerFx.Interpreter.Solver
 
             if (termsCount == 0)
             {
-                return await GetErrorValue(node, "No variables were found in the expression.");
+                Debug.WriteLine(node, "No variables were found in the expression.");
             }
 
             if (arg2 is NumberValue number)
