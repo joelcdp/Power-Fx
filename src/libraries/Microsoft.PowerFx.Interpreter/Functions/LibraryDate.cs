@@ -488,5 +488,29 @@ namespace Microsoft.PowerFx.Functions
                     return CommonErrors.InvalidDateTimeError(irContext);
             }
         }
+
+        public static FormulaValue Weekday(IRContext irContext, FormulaValue[] args)
+        {
+            if (args[0] is BlankValue)
+            {
+                return new NumberValue(irContext, 1);
+            }
+
+            DateTime arg0;
+            switch (args[0])
+            {
+                case DateTimeValue dtv:
+                    arg0 = dtv.Value;
+                    break;
+                case DateValue dv:
+                    arg0 = dv.Value;
+                    break;
+                default:
+                    return CommonErrors.RuntimeTypeMismatch(irContext);
+            }
+
+            var x = (int)arg0.DayOfWeek;
+            return new NumberValue(irContext, x);
+        }
     }
 }

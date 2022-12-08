@@ -4,6 +4,7 @@
 using System;
 using Microsoft.PowerFx.Core.Tests;
 using Microsoft.PowerFx.Types;
+using Microsoft.VisualStudio.TestPlatform.ObjectModel;
 using Xunit;
 
 namespace Microsoft.PowerFx.Interpreter.Tests
@@ -85,6 +86,30 @@ namespace Microsoft.PowerFx.Interpreter.Tests
             else
             {
                 Assert.True(false, "result was not a DateTimeValue");
+            }
+        }
+
+        [Theory]
+        [InlineData(1969, 02, 17, 1, "Weekday(DateTimeValue(\"{0}\"))")]
+        [InlineData(1969, 02, 18, 2, "Weekday(DateTimeValue(\"{0}\"))")]
+        [InlineData(1969, 02, 19, 3, "Weekday(DateTimeValue(\"{0}\"))")]
+        [InlineData(1969, 02, 20, 4, "Weekday(DateTimeValue(\"{0}\"))")]
+        [InlineData(1969, 02, 21, 5, "Weekday(DateTimeValue(\"{0}\"))")]
+        [InlineData(1969, 02, 22, 6, "Weekday(DateTimeValue(\"{0}\"))")]
+        [InlineData(1969, 02, 23, 0, "Weekday(DateTimeValue(\"{0}\"))")]
+        public void TestWeekday(int year, int month, int day, double expected, string formula)
+        {
+            var testDate = new DateTime(year, month, day);
+            var formattedFormula = string.Format(formula, testDate.ToString());
+            var result = _engine.Eval(formattedFormula);
+            Assert.NotNull(result);
+            if (result is NumberValue number)
+            {
+                Assert.Equal(expected, number.Value);
+            }
+            else
+            {
+                Assert.True(false, "result was not a NumberValue");
             }
         }
     }

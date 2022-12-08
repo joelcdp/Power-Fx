@@ -1382,6 +1382,16 @@ namespace Microsoft.PowerFx.Functions
                     targetFunction: VarTable)
             },
             {
+                BuiltinFunctionsCore.Weekday,
+                StandardErrorHandling<FormulaValue>(
+                    expandArguments: NoArgExpansion,
+                    replaceBlankValues: DoNotReplaceBlank,
+                    checkRuntimeTypes: DateOrDateTime,
+                    checkRuntimeValues: DeferRuntimeValueChecking,
+                    returnBehavior: ReturnBehavior.AlwaysEvaluateAndReturnResult,
+                    targetFunction: Weekday)
+            },
+            {
                 BuiltinFunctionsCore.With,
                 StandardErrorHandlingAsync<FormulaValue>(
                     expandArguments: NoArgExpansion,
