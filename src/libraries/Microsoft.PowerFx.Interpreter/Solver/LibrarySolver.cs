@@ -86,6 +86,10 @@ namespace Microsoft.PowerFx.Functions
             var arg1 = (LambdaFormulaValue)args[2];
 
             var solver = runner.FunctionServices.GetService<ISolver>(null);
+            var results = new List<RecordValue>();
+            var recordtype = RecordType.Empty()
+                                       .Add("Value", FormulaType.Boolean)
+                                       .Add("Name", FormulaType.String);
 
             foreach (LambdaFormulaValue condition in args.Skip(2))
             {
@@ -120,11 +124,19 @@ namespace Microsoft.PowerFx.Functions
                         return res;
                     }
 
-                    if (res is not BooleanValue boolValue ||
-                        !boolValue.Value)
+                    if (res is not BooleanValue boolValue)
                     {
-                        return FormulaValue.NewSingleColumnTable(new BooleanValue(condition.IRContext, false));
+                        return res;
                     }
+
+                    results.Add(
+                        FormulaValue.NewRecordFromFields(
+                            recordtype,
+                            new List<NamedValue>() 
+                            {
+                                new NamedValue("Value", boolValue),
+                                new NamedValue("Name", constraintName),
+                            }));
 
                     // Call the add constraint in the solver
                     //  Translate the var names
@@ -140,7 +152,7 @@ namespace Microsoft.PowerFx.Functions
             }
 
             var resultContext = new IRContext(irContext.SourceContext, FormulaType.Boolean);
-            return FormulaValue.NewSingleColumnTable(new BooleanValue(resultContext, true));
+            return FormulaValue.NewTable(recordtype, results);
         }
     }
 }

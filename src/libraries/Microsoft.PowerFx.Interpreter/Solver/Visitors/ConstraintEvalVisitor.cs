@@ -373,12 +373,30 @@ namespace Microsoft.PowerFx.Interpreter.Solver
                 Debug.WriteLine(node, "No variables were found in the expression.");
             }
 
-            if (arg2 is NumberValue number)
+            var result = false;
+
+            if (arg2 is NumberValue number2)
             {
-                _rhs = number.Value;
+                _rhs = number2.Value;
+
+                if (arg1 is NumberValue number1)
+                {
+                    switch (node.Op)
+                    {
+                        case BinaryOpKind.EqNumbers:
+                            result = number1.Value == number2.Value;
+                            break;
+                        case BinaryOpKind.LeqNumbers:
+                            result = number1.Value <= number2.Value;
+                            break;
+                        case BinaryOpKind.GeqNumbers:
+                            result = number1.Value >= number2.Value;
+                            break;
+                    }
+                }
             }
 
-            return FormulaValue.New(true);
+            return FormulaValue.New(result);
         }
 
         private static async ValueTask<FormulaValue> GetErrorValue(IntermediateNode node, string msg)
