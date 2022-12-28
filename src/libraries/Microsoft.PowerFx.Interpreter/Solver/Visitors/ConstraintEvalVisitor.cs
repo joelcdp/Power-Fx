@@ -140,9 +140,9 @@ namespace Microsoft.PowerFx.Interpreter.Solver
                 return await base.Visit(node, context);
             }
 
-            if (node.Args.Count != 2)
+            if (node.Args.Count != 3)
             {
-                return await GetErrorValue(node, $"If() function in this context must have two arguments.");
+                return await GetErrorValue(node, $"If() function in this context must have three arguments.");
             }
 
             try
@@ -153,7 +153,7 @@ namespace Microsoft.PowerFx.Interpreter.Solver
                 var condition = await node.Args[_ifArgIndex].Accept(this, context.IncrementStackDepthCounter());
                 var termsCount = _capturedTerms.Count;
                 if (termsCount - initialCount != 1 ||
-                    condition is not BooleanValue)
+                    condition is not BooleanValue conditionBool)
                 {
                     return await GetErrorValue(node, $"The first argument in the If() function must specific one boolean variable.");
                 }
@@ -161,7 +161,10 @@ namespace Microsoft.PowerFx.Interpreter.Solver
                 ConditionalVariable = _capturedTerms.Last().Item2;
                 _capturedTerms.Remove(_capturedTerms.Last());
                 _ifArgIndex = 1;
-                return await node.Args[_ifArgIndex].Accept(this, context.IncrementStackDepthCounter());
+                var result1 = await node.Args[_ifArgIndex].Accept(this, context.IncrementStackDepthCounter());
+                _ifArgIndex = 2;
+                var result2 = await node.Args[_ifArgIndex].Accept(this, context.IncrementStackDepthCounter());
+                return conditionBool.Value ? result1 : result2;
             }
             finally
             {

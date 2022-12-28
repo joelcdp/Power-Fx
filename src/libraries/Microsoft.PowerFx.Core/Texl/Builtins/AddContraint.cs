@@ -21,7 +21,16 @@ namespace Microsoft.PowerFx.Core.Texl.Builtins
         public override bool SupportsParamCoercion => true;
 
         public AddConstraintFunction()
-            : base("AddConstraints", TexlStrings.AboutAddConstraint, FunctionCategories.Logical, DType.Boolean, 0x6, 3, int.MaxValue, DType.EmptyTable, DType.String)
+            : base(
+                   "AddConstraints",
+                   TexlStrings.AboutAddConstraint, 
+                   FunctionCategories.Logical, 
+                   DType.CreateTable(new TypedName[2] { new TypedName(DType.String, new DName("Name")), new TypedName(DType.Boolean, ColumnName_Value) }), 
+                   0x6, 
+                   3, 
+                   int.MaxValue, 
+                   DType.EmptyTable, 
+                   DType.String)
         {
             ScopeInfo = new FunctionScopeInfo(this);
         }
@@ -66,7 +75,7 @@ namespace Microsoft.PowerFx.Core.Texl.Builtins
             }
             else if (argTypes[2].IsPrimitive || argTypes[2].IsTable)
             {
-                returnType = DType.CreateTable(new TypedName(argTypes[2], ColumnName_Value));
+                returnType = DType.CreateTable(new TypedName(DType.String, new DName("Name")), new TypedName(argTypes[2], ColumnName_Value));
             }
             else
             {

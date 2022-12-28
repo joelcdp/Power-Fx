@@ -151,7 +151,6 @@ namespace Microsoft.PowerFx.Functions
                 }
             }
 
-            var resultContext = new IRContext(irContext.SourceContext, FormulaType.Boolean);
             return FormulaValue.NewTable(recordtype, results);
         }
     }
